@@ -22,7 +22,7 @@ destination_endpoint='ddb59af0-6d04-11e5-ba46-22000b92c6ec'
 # Sample data
 source_path='/share/godata/'
 
-# Destinatino Path
+# Destination Path
 # The directory will be created if it doesn't exist
 destination_path='/~/sync-demo/'
 
