@@ -8,6 +8,7 @@ All examples use the Globus Python SDK and the Native App Authorization Flow.
 * `example_local_server.py` -- demonstrate how an app could use a local web server to automatically receive the "auth code."
 
 ## Getting Started
+* TODO: add instructions to install CLI
 * Set up your environment.
     * [OS X](#os-x)
     * [Linux](#linux-ubuntu)
