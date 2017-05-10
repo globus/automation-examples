@@ -1,0 +1,4 @@
+globus-sdk==1.0.0
+globus-cli==1.0.0.0
+
+
