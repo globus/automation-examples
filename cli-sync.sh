@@ -34,4 +34,7 @@ destination_path='/~/sync-demo/'
 #   checksum TODO: add description
 sync='checksum'
 
-globus transfer -r -s $sync $source_endpoint:$source_path $destination_endpoint:$destination_path
+# TODO
+# add ls to check that source is a directory
+
+globus transfer --recursive --sync $sync "$source_endpoint:$source_path" "$destination_endpoint:$destination_path"
