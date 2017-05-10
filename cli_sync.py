@@ -5,15 +5,15 @@ import sys
 import globus_sdk
 
 # you must have a client ID
-CLIENT_ID = '30824dfe-2038-4820-aad0-b3e991e0ca00'
+CLIENT_ID = ''
 # your app's client secret
-CLIENT_SECRET = '3dUQxmopO3dIzhPXWwDpYH+wiQULLzxiS64JZ6Mh0QI='
+CLIENT_SECRET = ''
 
 # Globus Tutorial Endpoint 1
 source_endpoint = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
 
 # Globus Tutorial Endpoint 2
-destination_endpoint = '6ff8893e-35b6-11e7-bcd1-22000b9a448b'
+destination_endpoint = ''
 
 # Sample data
 source_path = '/share/godata/'
