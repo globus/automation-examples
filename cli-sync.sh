@@ -23,7 +23,15 @@ destination_endpoint='ddb59af0-6d04-11e5-ba46-22000b92c6ec'
 source_path='/share/godata/'
 
 # Destinatino Path
-destination_path='/~/'
+# The directory will be created if it doesn't exist
+destination_path='/~/sync-demo/'
 
-globus transfer -r -s checksum $source_endpoint:$source_path $destination_endpoint:$destination_path
+# Sync option
+# Choices are
+#   exists    TODO: add description
+#   size     TODO: add description
+#   mtime    TODO: add description
+#   checksum TODO: add description
+sync='checksum'
 
+globus transfer -r -s $sync $source_endpoint:$source_path $destination_endpoint:$destination_path
