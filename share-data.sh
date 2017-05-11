@@ -94,8 +94,10 @@ globus ls "$shared_endpoint:$destination_directory" 1>/dev/null 2>/dev/null
 if [ $? == 0 ]; then
     # if it was, delete it
     if [ -n "$delete" ]; then
-        task_id=`globus delete --jq 'task_id' -r "$shared_endpoint:$destination_directory" | tr -d '"'`
-        globus task wait $task_id
+        task_id=`globus delete --jmespath 'task_id' -r "$shared_endpoint:$destination_directory" | tr -d '"'`
+        globus task wait --timeout 600 $task_id
+        rc=$?
+        check_rc
     else
         >&2 echo \
             "Error: Destination directory, $destination_path$basename, already exists." \
