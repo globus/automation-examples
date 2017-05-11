@@ -2,13 +2,29 @@
 Simple code examples for various use cases using Globus [Auth](https://docs.globus.org/api/auth/).
 
 ## Overview
-All examples use the Globus Python SDK and the Native App Authorization Flow.
-* `example_copy_paste.py` -- get an access token for Transfer and do an `ls` on an endpoint.
-* `example_copy_paste_refresh_token.py` -- get a refresh token for Transfer and do an `ls` on an endpoint and automatically retrieve a new access token when necessary.
-* `example_local_server.py` -- demonstrate how an app could use a local web server to automatically receive the "auth code."
+
+There are three example use cases in this repo:
+
+* Syncing a directory
+* Staging data in a shared directory
+* Removing directories after files are transferred 
+
+The syncing and staging examples are implemented as both a Bash
+script that calls the Globus CLI and a Python module that can be run
+as a script or imported as a module. The directory cleanup example is
+only implemented as a Python script. The Python examples modules are
+built on the Globus SDK.
+
+* `cli-sync.sh`: submit a recursive transfer with sync option.
+* `sync.py`: submit a recursive transfer with sync option; uses a [Native
+  App grant](https://github.com/globus/native-app-examples).
+* `share-data.sh`: stages data to a folder and sets sharing access
+  control to a user and, or, group.
+* `cleanup_cache.py`: removes directories under a shared endpoint that
+  have had data transferred from them. Uses a Native App grant.
 
 ## Getting Started
-* TODO: add instructions to install CLI
+* Install the [Globus Command Line Interface (CLI)](https://docs.globus.org/cli/installation/).
 * Set up your environment.
     * [OS X](#os-x)
     * [Linux](#linux-ubuntu)
@@ -16,7 +32,7 @@ All examples use the Globus Python SDK and the Native App Authorization Flow.
 * Create your own Native App registration for use with the examples. Visit the [Globus Developer Pages](https://developers.globus.org) to register an App.
     * When registering the App you'll be asked for some information, including the redirect URL and any scopes you will be requesting.
         * Check the "will be used by a native application checkbox"
-        * Redirect URL: `https://auth.globus.org/v2/web/auth-code` and `http://localhost:8000`
+        * Redirect URL: `https://auth.globus.org/v2/web/auth-code`
         * Scopes: `urn:globus:auth:scope:transfer.api.globus.org:all`, `openid`, `profile`, `email`
 
 ### OS X
