@@ -108,10 +108,10 @@ else
     check_rc
 fi
 
-if [ x$user_id != x ]; then
+if [ -n $user_id ]; then
     globus endpoint permission create --identity $user_id --permissions r "$shared_endpoint:$destination_directory"
 fi
-if [ x$group_uuid != x ]; then
+if [ -n $group_uuid ]; then
     globus endpoint permission create --group $group_uuid --permissions r "$shared_endpoint:$destination_directory"
 fi
 
