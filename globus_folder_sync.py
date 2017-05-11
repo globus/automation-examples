@@ -46,7 +46,7 @@ SCOPES = ('openid email profile '
 PREVIOUS_TASK_RUN_CASES = ['SUCCEEDED', 'FAILED']
 
 # Create the destination folder if it does not already exist
-CREATE_DESTINATION_FOLDER = True
+CREATE_DESTINATION_FOLDER = False
 
 
 get_input = getattr(__builtins__, 'raw_input', input)
@@ -154,26 +154,20 @@ def setup_transfer_client(transfer_tokens):
     return transfer_client
 
 
-def check_source_folder(transfer_client, source_ep, source_path):
-    """Check that source is a directory"""
+def check_endpoint_path(transfer_client, endpoint, path):
+    """Check the endpoint path exists"""
     try:
-        transfer_client.operation_ls(source_ep, path=source_path)
+        transfer_client.operation_ls(endpoint, path=path)
     except TransferAPIError as tapie:
-        print('Failed to query source endpoint "{}": {}'.format(
-            source_ep,
+        print('Failed to query endpoint "{}": {}'.format(
+            endpoint,
             tapie.message
         ))
         sys.exit(1)
 
 
-def check_destination_folder(transfer_client, dest_ep, dest_path):
-
-    try:
-        transfer_client.operation_ls(dest_ep)
-    except TransferAPIError:
-        print('Could not query destination endpoint,'
-              ' is it setup as a shared endpoint?')
-        sys.exit(1)
+def create_destination_directory(transfer_client, dest_ep, dest_path):
+    """Create the destination path if it does not exist"""
     try:
         transfer_client.operation_ls(dest_ep, path=dest_path)
     except TransferAPIError:
@@ -202,8 +196,12 @@ def main():
         # Ignore if there is no previous task
         pass
 
-    check_source_folder(transfer, SOURCE_ENDPOINT, SOURCE_PATH)
-    check_destination_folder(transfer, DESTINATION_ENDPOINT, DESTINATION_PATH)
+    check_endpoint_path(transfer, SOURCE_ENDPOINT, SOURCE_PATH)
+    if CREATE_DESTINATION_FOLDER:
+        create_destination_directory(transfer, DESTINATION_ENDPOINT,
+                                     DESTINATION_PATH)
+    else:
+        check_endpoint_path(transfer, DESTINATION_ENDPOINT, DESTINATION_PATH)
 
     tdata = TransferData(
         transfer,
