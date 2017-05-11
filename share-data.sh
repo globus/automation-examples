@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# This script transfers a folder to a shared endpoint
+# and sets the sharing access control to a specified
+# user, and, or group. The configuration options are
+# defined below (source endpoint, shared enpoint, etc.).
+
+# Note that the shared endpoint UUID must be provided.
+
 # Check if abort is necessary, and if so do it
 function check_rc () {
     if [ $# -gt 0 ]; then
