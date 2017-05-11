@@ -9,20 +9,6 @@ CLIENT_ID = ''
 # your app's client secret
 CLIENT_SECRET = ''
 
-# Globus Tutorial Endpoint 1
-source_endpoint = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
-
-# Globus Tutorial Endpoint 2
-destination_endpoint = 'ddb59af0-6d04-11e5-ba46-22000b92c6ec'
-
-# Sample data
-source_path = '/share/godata/'
-
-# Destination Path
-# The directory will be created if it doesn't exist
-destination_path = '/sync-demo'
-
-
 def sanity_check():
     if not bool(CLIENT_ID and CLIENT_SECRET):
         print('Please create an app at developers.globus.org and add the client id and secret')
@@ -79,6 +65,16 @@ def recursive_directory_transfer(tc, src_ep, dest_ep, src_path, dest_path):
 if __name__ == '__main__':
     sanity_check()
 
+    # Globus Tutorial Endpoint 1
+    source_endpoint = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
+    # Globus Tutorial Endpoint 2
+    destination_endpoint = 'ddb59af0-6d04-11e5-ba46-22000b92c6ec'
+    # Sample data
+    source_path = '/share/godata/'
+    # Destination Path
+    # The directory will be created if it doesn't exist
+    destination_path = '/sync-demo'
+    
     tc = setup_transfer_client()
     check_destination(destination_endpoint, destination_path)
     transfer_result = recursive_directory_transfer(
