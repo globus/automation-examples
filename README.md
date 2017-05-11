@@ -17,10 +17,14 @@ The Python examples modules are built on the
 [Globus SDK](https://globus-sdk-python.readthedocs.io/en/stable/).
 
 * `cli-sync.sh`: submit a recursive transfer with sync option.
-* `sync.py`: submit a recursive transfer with sync option; uses a [Native
+* `globus_folder_sync.py`: submit a recursive transfer with sync option; uses a [Native
   App grant](https://github.com/globus/native-app-examples).
 * `share-data.sh`: stages data to a folder and sets sharing access
   control to a user and, or, group.
+* `share_data.py`: stages data to a folder and sets sharing access
+  control to a user and, or, group. Uses a
+  [Client Credential](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/)
+  or Native App grant.
 * `cleanup_cache.py`: removes directories under a shared endpoint that
   have had data transferred from them. Uses a Native App grant.
 
