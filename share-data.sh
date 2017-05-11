@@ -20,8 +20,7 @@ shared_endpoint=''
 # Sample data
 source_path='/share/godata/'
 
-# Destinatino Path
-# The directory will be created if it doesn't exist
+# Destination Path
 destination_path='/'
 
 # User UUID transferred data will be shared with
