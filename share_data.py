@@ -7,7 +7,7 @@ from globus_sdk.exc import TransferAPIError
 
 # you must have a client ID
 CLIENT_ID = '585bde3e-d5bb-4efe-85d8-d6bf71c1f197'
-# the secret, needed to a Confidential App
+# the secret, needed for a Confidential App
 CLIENT_SECRET = 'ydajCFhRlz9HfPWdpKzkQJubVKEvBo6J6AF1xXUEOjI='
 
 
@@ -149,12 +149,16 @@ def share_data(args):
     try:
         rc = tc.operation_ls(args.shared_endpoint, path=destination_directory)
         if not args.delete:
-            print('Destination directory exists. Please delete the directory or '\
+            print('Destination directory exists. Delete the directory or '\
                     'use --delete option')
             sys.exit(1)
+        print('Destination directory, {}, exists and will be deleted'
+                .format(destination_directory))
         ddata = globus_sdk.DeleteData(tc, args.shared_endpoint, recursive=True)
         ddata.add_item(destination_directory)
+        print('Submitting a delete task')
         task = tc.submit_delete(ddata)
+        print('\ttask_id: {}'.format(task['task_id']))
         tc.task_wait(task['task_id'])
     except TransferAPIError as e:
         if e.code != u'ClientError.NotFound':
@@ -163,12 +167,13 @@ def share_data(args):
 
     # create a destination directory
     try:
+        print('Creating destination directory {}'.format(destination_directory))
         tc.operation_mkdir(args.shared_endpoint, destination_directory)
     except TransferAPIError as e:
             print(e, file=sys.stderr)
             sys.exit(1)
 
-    # add a rule to share a folder with group/user
+    # grant group/user read access to the destination directory
     if args.user_uuid:
         rule_data = {
             "DATA_TYPE": "access",
@@ -179,6 +184,8 @@ def share_data(args):
         }
 
         try:
+            print('Granting user, {}, read access to the destination directory'
+                    .format(args.user_uuid))
             tc.add_endpoint_acl_rule(args.shared_endpoint, rule_data)
         except TransferAPIError as e:
             if e.code != u'Exists':
@@ -195,23 +202,29 @@ def share_data(args):
         }
 
         try:
+            print('Granting group, {}, read access to '.format(args.user_uuid))
             tc.add_endpoint_acl_rule(args.shared_endpoint, rule_data)
         except TransferAPIError as e:
             if e.code != u'Exists':
                 print(e, file=sys.stderr)
                 sys.exit(1)
 
-    # transfer data (directory recursively)
+    # transfer data - source directory recursively
     tdata = globus_sdk.TransferData(tc, args.source_endpoint,
             args.shared_endpoint)
     tdata.add_item(args.source_path, destination_directory,
             recursive=True)
     try:
-        transfer_result = tc.submit_transfer(tdata)
+        print('Submitting a transfer task')
+        task = tc.submit_transfer(tdata)
     except TransferAPIError as e:
         print(e, file=sys.stderr)
         sys.exit(1)
-    print ("Transfer Task ID: ", transfer_result["task_id"])
+    print('\ttask_id: {}'.format(task['task_id']))
+    print('You can monitor the transfer task programmatically using Globus SDK, ' \
+            'or, if CLIENT_ID is your user uuid, go to the Web UI, ' \
+            'https://www.globus.org/app/activity/{}.'
+            .format(task['task_id']))
 
 
 if __name__ == '__main__':
