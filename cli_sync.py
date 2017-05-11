@@ -13,7 +13,7 @@ CLIENT_SECRET = ''
 source_endpoint = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
 
 # Globus Tutorial Endpoint 2
-destination_endpoint = ''
+destination_endpoint = 'ddb59af0-6d04-11e5-ba46-22000b92c6ec'
 
 # Sample data
 source_path = '/share/godata/'
