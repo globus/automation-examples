@@ -46,12 +46,12 @@ group_uuid=''
 sync='checksum'
 
 if [ -z $source_endpoint ]; then
-    >&2 echo Error: Source endpoint is not defined
+    >&2 echo 'Error: Source endpoint is not defined'
     exit 1
 fi
 
 if [ -z $shared_endpoint ]; then
-    >&2 echo Error: Shared destination endpoint is not defined
+    >&2 echo 'Error: Shared destination endpoint is not defined'
     exit 1
 fi
 
@@ -59,7 +59,7 @@ case "$destination_path" in
     /*)
         ;;
     *)
-        >&2 echo Destination path must be absolute
+        >&2 echo 'Destination path must be absolute'
         exit 1
         ;;
 esac
@@ -68,7 +68,7 @@ case "$source_path" in
     /*)
     ;;
     *)
-        >&2 echo Source path must be absolute
+        >&2 echo 'Source path must be absolute'
         exit 1
     ;;
 esac
@@ -102,12 +102,11 @@ if [ $? == 0 ]; then
             "Delete the directory or use --delete option"
         exit 1
     fi
-else
-    # if it was not, create a subdirectory
-    globus mkdir "$shared_endpoint:$destination_directory"
-    rc=$?
-    check_rc
 fi
+# create a subdirectory
+globus mkdir "$shared_endpoint:$destination_directory"
+rc=$?
+check_rc
 
 if [ -n "$user_id" ]; then
     globus endpoint permission create --identity "$user_id" --permissions r "$shared_endpoint:$destination_directory"
