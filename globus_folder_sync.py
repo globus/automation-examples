@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""Sync a directory between two Globus endpoints. Authorization only needs to
+happen once, afterwards tokens are saved to disk (MUST BE STORED IN A SECURE
+LOCATION). Store data is already checked for previous transfers, so if this
+script is run twice in quick succession, the second run won't queue a duplicate
+transfer."""
+
 import json
 import sys
 import webbrowser
@@ -9,28 +15,38 @@ from globus_sdk import (NativeAppAuthClient, TransferClient,
                         RefreshTokenAuthorizer, TransferData)
 from globus_sdk.exc import GlobusAPIError, TransferAPIError
 
-try:
-    import http.client as http_client
-except ImportError:
-    import httplib as http_client
-
+# Globus Tutorial Endpoint 1
 SOURCE_ENDPOINT = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
+# Globus Tutorial Endpoint 2
 DESTINATION_ENDPOINT = 'ddb59af0-6d04-11e5-ba46-22000b92c6ec'
-# Sample data
+# Copy data off of the endpoint share
 SOURCE_PATH = '/share/godata/'
 
-# Destination Path
-# The directory will be created if it doesn't exist
+# Destination Path -- The directory will be created if it doesn't exist
 DESTINATION_PATH = '/~/sync-demo'
 
+TRANSFER_LABEL = 'Folder Sync Example'
+
+# You will need to register a *Native App* on https://developers.globus.org/
+# Your app should include the following:
+# * The scopes should match the SCOPES variable below
+# * Your app's clientid should match the CLIENT_ID var below
+# * "Native App" should be checked
+# For more information:
+# https://docs.globus.org/api/auth/developer-guide/#register-app
 CLIENT_ID = '079bdf4e-9666-4816-ac01-7eab9dc82b93'
 DATA_FILE = 'transfer-data.json'
 REDIRECT_URI = 'https://auth.globus.org/v2/web/auth-code'
 SCOPES = ('openid email profile '
           'urn:globus:auth:scope:transfer.api.globus.org:all')
 
-TUTORIAL_ENDPOINT_ID = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
+# ONLY run new tasks if there was a previous task and it exited with one of the
+# following status. This is ignored if there was no previous task. The previous
+# task is queried from the DATA_FILE
 PREVIOUS_TASK_RUN_CASES = ['SUCCEEDED', 'FAILED']
+
+# Create the destination folder if it does not already exist
+CREATE_DESTINATION_FOLDER = True
 
 
 get_input = getattr(__builtins__, 'raw_input', input)
@@ -193,7 +209,7 @@ def main():
         transfer,
         SOURCE_ENDPOINT,
         DESTINATION_ENDPOINT,
-        label="SDK example",
+        label=TRANSFER_LABEL,
         sync_level="checksum"
     )
     tdata.add_item(SOURCE_PATH, DESTINATION_PATH, recursive=True)
