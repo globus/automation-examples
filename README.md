@@ -1,5 +1,5 @@
 # Developer Tutorial Examples
-Simple code examples for various use cases using Globus [Auth](https://docs.globus.org/api/auth/).
+Simple code examples for various use cases using Globus.
 
 ## Overview
 
@@ -10,10 +10,11 @@ There are three example use cases in this repo:
 * Removing directories after files are transferred 
 
 The syncing and staging examples are implemented as both a Bash
-script that calls the Globus CLI and a Python module that can be run
-as a script or imported as a module. The directory cleanup example is
-only implemented as a Python script. The Python examples modules are
-built on the Globus SDK.
+script that calls the [Globus CLI](https://docs.globus.org/cli/) and 
+a Python module that can be run as a script or imported as a module. 
+The directory cleanup example is only implemented as a Python script. 
+The Python examples modules are built on the 
+[Globus SDK](https://globus-sdk-python.readthedocs.io/en/stable/).
 
 * `cli-sync.sh`: submit a recursive transfer with sync option.
 * `sync.py`: submit a recursive transfer with sync option; uses a [Native
