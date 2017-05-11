@@ -22,7 +22,7 @@ source_path='/share/godata/'
 
 # Destinatino Path
 # The directory will be created if it doesn't exist
-destination_path='/~/share-data-demo/'
+destination_path='/'
 
 # User UUID transferred data will be shared with
 user_id='johndoe@globusid.org'
@@ -46,11 +46,6 @@ fi
 
 if [ -z $shared_endpoint ]; then
     >&2 echo Error: Shared destination endpoint is not defined
-    exit 1
-fi
-
-if [ -z $user_id -a -z $group_uuid ]; then
-    >&2 echo Error: user ID and group UUID is not defined
     exit 1
 fi
 
@@ -108,10 +103,10 @@ else
     check_rc
 fi
 
-if [ -n $user_id ]; then
-    globus endpoint permission create --identity $user_id --permissions r "$shared_endpoint:$destination_directory"
+if [ -n "$user_id" ]; then
+    globus endpoint permission create --identity "$user_id" --permissions r "$shared_endpoint:$destination_directory"
 fi
-if [ -n $group_uuid ]; then
+if [ -n "$group_uuid" ]; then
     globus endpoint permission create --group $group_uuid --permissions r "$shared_endpoint:$destination_directory"
 fi
 
