@@ -22,10 +22,11 @@ The Python examples modules are built on the
 * `share-data.sh`: stages data to a folder and sets sharing access
   control to a user and, or, group.
 * `share_data.py`: stages data to a folder and sets sharing access
-  control to a user and, or, group. Uses a Native App grant or
-  [Client Credential](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
+  control to a user and, or, group. Uses a [Native
+  App grant](https://github.com/globus/native-app-examples) or
+  [Client Credential grant](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
 * `cleanup_cache.py`: removes directories under a shared endpoint that
-  have had data transferred from them. Uses [Client Credential](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
+  have had data transferred from them. Uses [Client Credential grant](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
 
 
 ## Getting Started
@@ -134,8 +135,8 @@ Submitting a transfer task
 You can monitor the transfer task programmatically using Globus SDK, or, if you run it as a native app,
 go to the Web UI, https://www.globus.org/app/activity/fc4b38b6-39ba-11e7-bcec-22000b9a448b.
 ```
-The same functionality provides the shell script, share-data.sh. In this case,
-a source endpoint and source path are hardcoded.
+The same functionality is provided by the shell script, share-data.sh, with
+the only difference that a source endpoint and source path are hardcoded.
 ```
 bash share-data.sh \
     --shared-endpoint efc2bf94-35b7-11e7-bcd3-22000b9a448b \
