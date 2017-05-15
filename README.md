@@ -113,10 +113,12 @@ $ cat last-transfer-id.txt
 ##### share_data.py/share-data.sh
 
 The app transfers `/share/godata/` directory from Tutorial Endpoint 1 to a
-shared endpoint and destination path specified in the command line. Before
-the app submits the transfer, it detects if a destination path already exists.
-If it does and `--delete` option is specified, the app deletes the path, creates
-it again and grant a specified user or group read access.
+shared endpoint and destination path specified in the command line. You have to
+make sure that the destination path on the shared endpoint exists. Before
+the app submits the transfer, it detects if a destination path concatenated with
+the last bit of the source path already exists. If it does and `--delete` option
+is specified, the app deletes the path, creates it again and grant a specified
+user or group read access.
 ```
 $ python share_data.py \
     --source-endpoint ddb59aef-6d04-11e5-ba46-22000b92c6ec \
