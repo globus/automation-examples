@@ -18,24 +18,11 @@ function check_rc () {
     fi
 }
 
-# Globus Tutorial Endpoint 1
-source_endpoint='ddb59aef-6d04-11e5-ba46-22000b92c6ec'
-
-# Globus Shared Endpoint
-shared_endpoint=''
+# Globus Tutorial Endpoint 2
+source_endpoint='ddb59af0-6d04-11e5-ba46-22000b92c6ec'
 
 # Sample data
 source_path='/share/godata/'
-
-# Destination Path
-destination_path='/'
-
-# User UUID transferred data will be shared with
-user_id='johndoe@globusid.org'
-
-# Group UUID transferred data will be shared with
-group_uuid=''
-
 
 # Sync option
 # Choices are
@@ -45,13 +32,45 @@ group_uuid=''
 #   checksum TODO: add description
 sync='checksum'
 
+
+while [ $# -gt 0 ]; do
+    key="$1"
+    case $1 in
+        -d|--delete)
+            delete='yes'
+        ;;
+        --shared-endpoint)
+            shift
+            shared_endpoint=$1
+        ;;
+        --destination-path)
+            shift
+            destination_path=$1
+        ;;
+        --user-uuid|--user-id)
+            shift
+            user_id=$1
+        ;;
+        --group-uuid)
+            shift
+            group_uuid=$1
+        ;;
+        -h|--help)
+            echo -e "Usage:" \
+                "$0 --shared-endpoint <UUID> --destination-path <PATH> [-d|--delete] [-h|--help]"
+            exit 0
+        ;;
+    esac
+    shift
+done
+
 if [ -z $source_endpoint ]; then
-    >&2 echo 'Error: Source endpoint is not defined'
+    echo 'Error: Source endpoint is not defined' >&2
     exit 1
 fi
 
 if [ -z $shared_endpoint ]; then
-    >&2 echo 'Error: Shared destination endpoint is not defined'
+    echo 'Error: Shared destination endpoint is not defined' >&2
     exit 1
 fi
 
@@ -59,7 +78,7 @@ case "$destination_path" in
     /*)
         ;;
     *)
-        >&2 echo 'Destination path must be absolute'
+        echo 'Destination path must be absolute' >&2
         exit 1
         ;;
 esac
@@ -68,20 +87,10 @@ case "$source_path" in
     /*)
     ;;
     *)
-        >&2 echo 'Source path must be absolute'
+        echo 'Source path must be absolute' >&2
         exit 1
     ;;
 esac
-
-while [ $# -gt 0 ]; do
-    key="$1"
-    case $1 in
-        -d|--delete)
-            delete='yes'
-        ;;
-    esac
-    shift
-done
 
 globus ls "$shared_endpoint:$destination_path" 1>/dev/null
 rc=$?
@@ -105,7 +114,7 @@ if [ $? == 0 ]; then
         exit 1
     fi
 fi
-# create a subdirectory
+# create a destination subdirectory
 globus mkdir "$shared_endpoint:$destination_directory"
 rc=$?
 check_rc

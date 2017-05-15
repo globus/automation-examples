@@ -2,13 +2,22 @@ from __future__ import print_function
 import os
 import sys
 import argparse
+import webbrowser
+import json
 import globus_sdk
 from globus_sdk.exc import TransferAPIError
 
 # you must have a client ID
-CLIENT_ID = '585bde3e-d5bb-4efe-85d8-d6bf71c1f197'
+CLIENT_ID = '079bdf4e-9666-4816-ac01-7eab9dc82b93'
 # the secret, needed for a Confidential App
-CLIENT_SECRET = 'ydajCFhRlz9HfPWdpKzkQJubVKEvBo6J6AF1xXUEOjI='
+CLIENT_SECRET = ''
+# Redirect URI specified when registering a native app
+REDIRECT_URI = 'https://auth.globus.org/v2/web/auth-code'
+SCOPES = ('openid email profile '
+          'urn:globus:auth:scope:transfer.api.globus.org:all')
+TOKEN_FILE='refresh-tokens.json'
+
+get_input = getattr(__builtins__, 'raw_input', input)
 
 
 def load_tokens_from_file(filepath):
@@ -31,6 +40,10 @@ def update_tokens_file_on_refresh(token_response):
     Will be invoked any time a new access token is fetched.
     """
     save_tokens_to_file(TOKEN_FILE, token_response.by_resource_server)
+
+
+def is_remote_session():
+    return os.environ.get('SSH_TTY', os.environ.get('SSH_CONNECTION'))
 
 
 def do_native_app_authentication(client_id, redirect_uri,
@@ -73,7 +86,9 @@ def get_native_app_authorizer(client_id):
         # if we need to get tokens, start the Native App authentication process
         #tokens = do_native_app_authentication(CLIENT_ID, REDIRECT_URI, SCOPES)
         # or start the Confidential App authentication process
-        tokens = do_confidential_app_authentication(client_id=client_id)
+        tokens = do_native_app_authentication(client_id=client_id,
+                redirect_uri=REDIRECT_URI, requested_scopes=SCOPES)
+        print(tokens)
         try:
             save_tokens_to_file(TOKEN_FILE, tokens)
         except:
@@ -81,9 +96,9 @@ def get_native_app_authorizer(client_id):
 
     transfer_tokens = tokens['transfer.api.globus.org']
 
-    auth_client = NativeAppAuthClient(client_id=client_id)
+    auth_client = globus_sdk.NativeAppAuthClient(client_id=client_id)
 
-    return RefreshTokenAuthorizer(
+    return globus_sdk.RefreshTokenAuthorizer(
         transfer_tokens['refresh_token'],
         auth_client,
         access_token=transfer_tokens['access_token'],
@@ -122,10 +137,10 @@ def share_data(args):
         sys.exit(1)
 
     # get an authorizer if it is a Native App
-    #authorizer = get_native_app_authorizer(client_id=CLIENT_ID)
+    authorizer = get_native_app_authorizer(client_id=CLIENT_ID)
     # get an authorizer if it is a Confidential App
-    authorizer = get_confidential_app_authorizer(client_id=CLIENT_ID,
-            client_secret=CLIENT_SECRET)
+    #authorizer = get_confidential_app_authorizer(client_id=CLIENT_ID,
+    #        client_secret=CLIENT_SECRET)
 
     # create a TransferClient object
     tc = globus_sdk.TransferClient(authorizer=authorizer)
@@ -154,7 +169,8 @@ def share_data(args):
             sys.exit(1)
         print('Destination directory, {}, exists and will be deleted'
                 .format(destination_directory))
-        ddata = globus_sdk.DeleteData(tc, args.shared_endpoint, recursive=True)
+        ddata = globus_sdk.DeleteData(tc, args.shared_endpoint,
+                label='Share Data Sample', recursive=True)
         ddata.add_item(destination_directory)
         print('Submitting a delete task')
         task = tc.submit_delete(ddata)
@@ -211,7 +227,7 @@ def share_data(args):
 
     # transfer data - source directory recursively
     tdata = globus_sdk.TransferData(tc, args.source_endpoint,
-            args.shared_endpoint)
+            args.shared_endpoint, label='Share Data Sample')
     tdata.add_item(args.source_path, destination_directory,
             recursive=True)
     try:
