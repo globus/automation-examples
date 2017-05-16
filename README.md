@@ -108,8 +108,8 @@ Globus CLI is responsible for the OAuth 2.0 authorization flow and handling
 access and refresh tokens. The example shell script, cli-sync.sh, calls
 the Globus CLI transfer command only. To avoid transferring the same data
 concurrently, the script stores a transfer task id in last-transfer-id.txt
-file and checks this file on every execution to avoid the same transfers
-running concurrently.
+file and checks this file on every execution to avoid the same files are
+transferred concurrently.
 ```
 $ globus login
 $ bash cli-sync.sh 
