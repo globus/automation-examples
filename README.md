@@ -118,13 +118,13 @@ $ cat last-transfer-id.txt
 ```
 ##### share_data.py and share-data.sh
 
-The app transfers file from a source path from an source endpoint to a shared
-endpoint and destination path specified in the command line. You have to
-make sure the destination path exists. Before the script submits the transfer,
-it detects if the destination path concatenated with the last bit of the source
-path exists. If it does and `--delete` option is specified, the script deletes
-the path with all subdirectories and files, creates it again and grant a
-specified user or group read access.
+The app transfers a directory to a shared endpoint and destination path
+specified in the command line. You have to make sure the destination path
+exists. Before the script starts transferring files, it checks if the
+destination path concatenated with the last bit of the source path exists. If
+it does and `--delete` option is specified, the script deletes the path with
+all subdirectories and files, creates it again and grant a specified user or
+group read access.
 In the example below, the script transfers `/share/godata/` from Tutorial
 Endpoint 1 to `/share-data-demo/` on a shared endpoint made of Tutorial
 Endpoint 2.
