@@ -94,8 +94,8 @@ a different value of `DESTINATION_PATH` in `globus_folder_sync.py`.
 The script launches a web browser to get an OAuth authorization code.
 After you consent and copy the code to the 'Enter the auth code' prompt,
 the script requests access and refresh tokens from the Globus Auth service and
-saves them into transfer-data.json file to avoid going through the OAuth flow
-every time, when the application is executed.
+saves the tokens in transfer-data.json file to avoid going through the OAuth
+flow every time, when the application is executed.
 
 ```
 $ python globus_folder_sync.py 
@@ -123,8 +123,8 @@ endpoint and destination path specified in the command line. You have to
 make sure the destination path exists. Before the script submits the transfer,
 it detects if the destination path concatenated with the last bit of the source
 path exists. If it does and `--delete` option is specified, the script deletes
-the path with all subdirectories and files, creates it again and grant a specified
-user or group read access.
+the path with all subdirectories and files, creates it again and grant a
+specified user or group read access.
 In the example below, the script transfers `/share/godata/` from Tutorial
 Endpoint 1 to `/share-data-demo/` on a shared endpoint made of Tutorial
 Endpoint 2.
