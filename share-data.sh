@@ -18,12 +18,6 @@ function check_rc () {
     fi
 }
 
-# Globus Tutorial Endpoint 2
-source_endpoint='ddb59af0-6d04-11e5-ba46-22000b92c6ec'
-
-# Sample data
-source_path='/share/godata/'
-
 # Sync option
 # Choices are
 #   exists   TODO: add description
@@ -36,12 +30,17 @@ sync='checksum'
 while [ $# -gt 0 ]; do
     key="$1"
     case $1 in
-        -d|--delete)
-            delete='yes'
+        --source-endpoint)
+            shift
+            source_endpoint=$1
         ;;
         --shared-endpoint)
             shift
             shared_endpoint=$1
+        ;;
+        --source-path)
+            shift
+            source_path=$1
         ;;
         --destination-path)
             shift
@@ -54,6 +53,9 @@ while [ $# -gt 0 ]; do
         --group-uuid)
             shift
             group_uuid=$1
+        ;;
+        -d|--delete)
+            delete='yes'
         ;;
         -h|--help)
             echo -e "Usage:" \

@@ -85,14 +85,17 @@ The Python examples modules are built on the
 
 ### Running the scripts
 
-##### globus_folder_sync.py/cli-sync.sh
+##### globus_folder_sync.py and cli-sync.sh
 
 The app transfers `/share/godata/` directory from Tutorial Endpoint 1 to
-`/~/sync-demo/` in a user's home directory on Tutorial Endpoint 2. To run the
-app make sure that you have `sync-demo` directory created on Tutorial Endpoint
-2, or change `DESTINATION_PATH` in `globus_folder_sync.py`. When you run the
-app, the app will launch a web browser to get a authorization code. After you
-consent, copy an authorization code to the app prompt:
+`/~/sync-demo/` on Tutorial Endpoint 2. The destination path must exist
+before the script is executed. The path can also be changed by specifying
+a different value of `DESTINATION_PATH` in `globus_folder_sync.py`.
+The script launches a web browser to get an OAuth authorization code.
+After you consent and copy the code code to the 'Enter the auth code' prompt,
+access and refresh tokens are obtained from the Globus Auth service and
+saved in transfer-data.json file to avoid going through the OAuth flow
+every time, when the application is executed.
 
 ```
 $ python globus_folder_sync.py 
@@ -100,29 +103,35 @@ Native App Authorization URL:
 https://auth.globus.org/v2/oauth2/authorize?code_challenge=6xeOSl_5knYrzGPYZZRSme-rbA&state=_default&redirect_uri=https%3A%2F%2Fauth.globus.org%2Fv2%2Fweb%2Fauth-code&response_type=code&client_id=079bdf4e-9666-4816-ac01-7eab9dc82b93&scope=openid+email+profile+urn%3Aglobus%3Aauth%3Ascope%3Atransfer.api.globus.org%3Aall&code_challenge_method=S256&access_type=offline
 Enter the auth code:
 ```
-
-The shell script, cli-sync.sh, provides the same functionality. The script
-stores a task id in last-transfer-id.txt to avoid multiple concurrent
-transfers of the same files to the same destination:
-
+The same functionality can be implemented using Globus CLI. In this case,
+Globus CLI is responsible for the OAuth 2.0 authorization flow and storing
+access and refresh tokens. The example shell script, cli-sync.sh, calls
+the Globus CLI transfer command only. To avoid transferring the same data
+concurrently, the script stores a transfer task id in last-transfer-id.txt
+file and checks this file on every execution to avoid the same transfers
+running concurrently.
 ```
+$ globus login
 $ bash cli-sync.sh 
 $ cat last-transfer-id.txt
 842ac3d8-39b5-11e7-bcec-22000b9a448b
 ```
-##### share_data.py/share-data.sh
+##### share_data.py and share-data.sh
 
-The app transfers `/share/godata/` directory from Tutorial Endpoint 1 to a
-shared endpoint and destination path specified in the command line. You have to
-make sure that the destination path on the shared endpoint exists. Before
-the app submits the transfer, it detects if a destination path concatenated with
-the last bit of the source path already exists. If it does and `--delete` option
-is specified, the app deletes the path, creates it again and grant a specified
+The app transfers file from a source path from an source endpoint to a shared
+endpoint and destination path specified in the command line. You have to
+make sure the destination path exists. Before the script submits the transfer,
+it detects if the destination path concatenated with the last bit of the source
+path exists. If it does and `--delete` option is specified, the script deletes
+the path with all subdirectories and files, creates it again and grant a specified
 user or group read access.
+In the example below, the script transfers `/share/godata/` from Tutorial
+Endpoint 1 to `/share-data-demo/` on a shared endpoint made of Tutorial
+Endpoint 2.
 ```
 $ python share_data.py \
-    --source-endpoint ddb59aef-6d04-11e5-ba46-22000b92c6ec \
-    --shared-endpoint efc2bf94-35b7-11e7-bcd3-22000b9a448b \
+    --source-endpoint ddb59aef-6d04-11e5-ba46-22000b92c6ec \ # Tutorial Endpoint 1
+    --shared-endpoint efc2bf94-35b7-11e7-bcd3-22000b9a448b \ # Shared endpoint on Tutorial Endpoint 2
     --source-path /share/godata/ \
     --destination-path /share-data-demo/ \
     --user-uuid 94f0c387-9528-4bed-b373-4ad840f32661 \
@@ -137,11 +146,13 @@ Submitting a transfer task
 You can monitor the transfer task programmatically using Globus SDK, or, if you run it as a native app,
 go to the Web UI, https://www.globus.org/app/activity/fc4b38b6-39ba-11e7-bcec-22000b9a448b.
 ```
-The same functionality is provided by the shell script, share-data.sh, with
-the only difference that a source endpoint and source path are hardcoded.
+Share-data.sh script shows how to implement the same functionality using Globus CLI.
 ```
-bash share-data.sh \
-    --shared-endpoint efc2bf94-35b7-11e7-bcd3-22000b9a448b \
+$ globus login
+$ bash share-data.sh \
+    --source-endpoint ddb59aef-6d04-11e5-ba46-22000b92c6ec \ # Tutorial Endpoint 1
+    --shared-endpoint efc2bf94-35b7-11e7-bcd3-22000b9a448b \ # Shared endpoint on Tutorial Endpoint 2
+    --source-path /share/godata/ \
     --destination-path /share-data-demo/ \
     --user-uuid 94f0c387-9528-4bed-b373-4ad840f32661 \
     --delete
