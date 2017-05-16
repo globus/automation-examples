@@ -131,7 +131,7 @@ Endpoint 2.
 ```
 $ python share_data.py \
     --source-endpoint ddb59aef-6d04-11e5-ba46-22000b92c6ec \ # Tutorial Endpoint 1
-    --shared-endpoint efc2bf94-35b7-11e7-bcd3-22000b9a448b \ # Shared endpoint on Tutorial Endpoint 2
+    --shared-endpoint fc1fde1e-3a41-11e7-bcf2-22000b9a448b \ # Shared endpoint on Tutorial Endpoint 2
     --source-path /share/godata/ \
     --destination-path /share-data-demo/ \
     --user-uuid 94f0c387-9528-4bed-b373-4ad840f32661 \
@@ -151,7 +151,7 @@ Share-data.sh script shows how to implement the same functionality using Globus 
 $ globus login
 $ bash share-data.sh \
     --source-endpoint ddb59aef-6d04-11e5-ba46-22000b92c6ec \ # Tutorial Endpoint 1
-    --shared-endpoint efc2bf94-35b7-11e7-bcd3-22000b9a448b \ # Shared endpoint on Tutorial Endpoint 2
+    --shared-endpoint fc1fde1e-3a41-11e7-bcf2-22000b9a448b \ # Shared endpoint on Tutorial Endpoint 2
     --source-path /share/godata/ \
     --destination-path /share-data-demo/ \
     --user-uuid 94f0c387-9528-4bed-b373-4ad840f32661 \
