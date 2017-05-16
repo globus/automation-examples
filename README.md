@@ -92,9 +92,9 @@ The app transfers `/share/godata/` directory from Tutorial Endpoint 1 to
 before the script is executed. The path can also be changed by specifying
 a different value of `DESTINATION_PATH` in `globus_folder_sync.py`.
 The script launches a web browser to get an OAuth authorization code.
-After you consent and copy the code code to the 'Enter the auth code' prompt,
-access and refresh tokens are obtained from the Globus Auth service and
-saved in transfer-data.json file to avoid going through the OAuth flow
+After you consent and copy the code to the 'Enter the auth code' prompt,
+the script requests access and refresh tokens from the Globus Auth service and
+saves them into transfer-data.json file to avoid going through the OAuth flow
 every time, when the application is executed.
 
 ```
