@@ -104,7 +104,7 @@ https://auth.globus.org/v2/oauth2/authorize?code_challenge=6xeOSl_5knYrzGPYZZRSm
 Enter the auth code:
 ```
 The same functionality can be implemented using Globus CLI. In this case,
-Globus CLI is responsible for the OAuth 2.0 authorization flow and storing
+Globus CLI is responsible for the OAuth 2.0 authorization flow and handling
 access and refresh tokens. The example shell script, cli-sync.sh, calls
 the Globus CLI transfer command only. To avoid transferring the same data
 concurrently, the script stores a transfer task id in last-transfer-id.txt
