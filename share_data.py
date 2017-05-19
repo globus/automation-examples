@@ -88,7 +88,6 @@ def get_native_app_authorizer(client_id):
         # or start the Confidential App authentication process
         tokens = do_native_app_authentication(client_id=client_id,
                 redirect_uri=REDIRECT_URI, requested_scopes=SCOPES)
-        print(tokens)
         try:
             save_tokens_to_file(TOKEN_FILE, tokens)
         except:
