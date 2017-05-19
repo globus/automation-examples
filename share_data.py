@@ -15,7 +15,7 @@ CLIENT_SECRET = ''
 REDIRECT_URI = 'https://auth.globus.org/v2/web/auth-code'
 SCOPES = ('openid email profile '
           'urn:globus:auth:scope:transfer.api.globus.org:all')
-TOKEN_FILE='refresh-tokens.json'
+TOKEN_FILE = 'refresh-tokens.json'
 
 get_input = getattr(__builtins__, 'raw_input', input)
 
@@ -83,11 +83,10 @@ def get_native_app_authorizer(client_id):
         pass
 
     if not tokens:
-        # if we need to get tokens, start the Native App authentication process
-        #tokens = do_native_app_authentication(CLIENT_ID, REDIRECT_URI, SCOPES)
-        # or start the Confidential App authentication process
-        tokens = do_native_app_authentication(client_id=client_id,
-                redirect_uri=REDIRECT_URI, requested_scopes=SCOPES)
+        tokens = do_native_app_authentication(
+                client_id=client_id,
+                redirect_uri=REDIRECT_URI,
+                requested_scopes=SCOPES)
         try:
             save_tokens_to_file(TOKEN_FILE, tokens)
         except:
@@ -98,11 +97,11 @@ def get_native_app_authorizer(client_id):
     auth_client = globus_sdk.NativeAppAuthClient(client_id=client_id)
 
     return globus_sdk.RefreshTokenAuthorizer(
-        transfer_tokens['refresh_token'],
-        auth_client,
-        access_token=transfer_tokens['access_token'],
-        expires_at=transfer_tokens['expires_at_seconds'],
-        on_refresh=update_tokens_file_on_refresh)
+            transfer_tokens['refresh_token'],
+            auth_client,
+            access_token=transfer_tokens['access_token'],
+            expires_at=transfer_tokens['expires_at_seconds'],
+            on_refresh=update_tokens_file_on_refresh)
 
 
 def do_confidential_app_authentication(client_id, client_secret):
@@ -119,12 +118,14 @@ def do_confidential_app_authentication(client_id, client_secret):
 
 
 def get_confidential_app_authorizer(client_id, client_secret):
-    tokens = do_confidential_app_authentication(client_id=client_id,
+    tokens = do_confidential_app_authentication(
+            client_id=client_id,
             client_secret=client_secret)
     transfer_tokens = tokens['transfer.api.globus.org']
     transfer_access_token = transfer_tokens['access_token']
 
     return globus_sdk.AccessTokenAuthorizer(transfer_access_token)
+
 
 def share_data(args):
 
@@ -146,30 +147,34 @@ def share_data(args):
 
     # check if a destination directory exists at all
     try:
-        rc = tc.operation_ls(args.shared_endpoint, path=args.destination_path)
+        tc.operation_ls(args.shared_endpoint, path=args.destination_path)
     except TransferAPIError as e:
         print(e, file=sys.stderr)
         sys.exit(1)
-
 
     dirname, leaf = os.path.split(args.source_path)
     if leaf == '':
         _, leaf = os.path.split(dirname)
     destination_directory = os.path.join(args.destination_path, leaf) + '/'
 
-    # check if a directory with the same name was already transferred to the
-    # destination path if it was and --delete option is specified, delete the
-    # directory
+    """
+    check if a directory with the same name was already transferred to the
+    destination path if it was and --delete option is specified, delete the
+    directory
+    """
     try:
         rc = tc.operation_ls(args.shared_endpoint, path=destination_directory)
         if not args.delete:
-            print('Destination directory exists. Delete the directory or '\
-                    'use --delete option')
+            print('Destination directory exists. Delete the directory or '
+                  'use --delete option')
             sys.exit(1)
         print('Destination directory, {}, exists and will be deleted'
-                .format(destination_directory))
-        ddata = globus_sdk.DeleteData(tc, args.shared_endpoint,
-                label='Share Data Sample', recursive=True)
+              .format(destination_directory))
+        ddata = globus_sdk.DeleteData(
+                tc,
+                args.shared_endpoint,
+                label='Share Data Sample',
+                recursive=True)
         ddata.add_item(destination_directory)
         print('Submitting a delete task')
         task = tc.submit_delete(ddata)
@@ -182,7 +187,8 @@ def share_data(args):
 
     # create a destination directory
     try:
-        print('Creating destination directory {}'.format(destination_directory))
+        print('Creating destination directory {}'
+              .format(destination_directory))
         tc.operation_mkdir(args.shared_endpoint, destination_directory)
     except TransferAPIError as e:
             print(e, file=sys.stderr)
@@ -200,7 +206,7 @@ def share_data(args):
 
         try:
             print('Granting user, {}, read access to the destination directory'
-                    .format(args.user_uuid))
+                  .format(args.user_uuid))
             tc.add_endpoint_acl_rule(args.shared_endpoint, rule_data)
         except TransferAPIError as e:
             if e.code != u'Exists':
@@ -225,10 +231,12 @@ def share_data(args):
                 sys.exit(1)
 
     # transfer data - source directory recursively
-    tdata = globus_sdk.TransferData(tc, args.source_endpoint,
-            args.shared_endpoint, label='Share Data Sample')
-    tdata.add_item(args.source_path, destination_directory,
-            recursive=True)
+    tdata = globus_sdk.TransferData(
+            tc,
+            args.source_endpoint,
+            args.shared_endpoint,
+            label='Share Data Sample')
+    tdata.add_item(args.source_path, destination_directory, recursive=True)
     try:
         print('Submitting a transfer task')
         task = tc.submit_transfer(tdata)
@@ -236,10 +244,10 @@ def share_data(args):
         print(e, file=sys.stderr)
         sys.exit(1)
     print('\ttask_id: {}'.format(task['task_id']))
-    print('You can monitor the transfer task programmatically using Globus SDK, ' \
-            'or, if CLIENT_ID is your user uuid, go to the Web UI, ' \
-            'https://www.globus.org/app/activity/{}.'
-            .format(task['task_id']))
+    print('You can monitor the transfer task programmatically using Globus SDK'
+          ', or, if CLIENT_ID is your user uuid, go to the Web UI, '
+          'https://www.globus.org/app/activity/{}.'
+          .format(task['task_id']))
 
 
 if __name__ == '__main__':
@@ -249,12 +257,15 @@ if __name__ == '__main__':
     parser.add_argument('--shared-endpoint', required=True)
     parser.add_argument('--source-path', required=True)
     parser.add_argument('--destination-path', required=True)
-    parser.add_argument('--group-uuid',
+    parser.add_argument(
+            '--group-uuid',
             help='UUID of a group transferred data will be shared with')
-    parser.add_argument('--user-uuid',
+    parser.add_argument(
+            '--user-uuid',
             help='UUID of a user transferred data will be shared with')
-    parser.add_argument('--delete', action='store_true',
-            help='Delete a destination directory if already exists before ' \
+    parser.add_argument(
+            '--delete', action='store_true',
+            help='Delete a destination directory if already exists before '
             'transferring data')
     args = parser.parse_args()
 
