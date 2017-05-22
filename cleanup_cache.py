@@ -71,13 +71,15 @@ def main():
     tasklist = tasks.data
     if not tasklist:
         print("No transfers from {} found in the last 24 hours, nothing to clean up".format(SOURCE_ENDPOINT_ID))
+    else:
+        print("{} total transfers found from {} in the last 24 hours, some may not be of type TRANSFER".format(len(tasklist),SOURCE_ENDPOINT_ID))
     for taskglob in tasklist:
         if (taskglob.data["type"] == "TRANSFER"):
             task = taskglob.data
             if (task["source_endpoint_id"] == SOURCE_ENDPOINT_ID):
                 successful_task = tc.endpoint_manager_task_successful_transfers(
                     task["task_id"])
-                print("Task({}): {} -> {}\n was submitted by {}\n".
+                print("Transfer Task({}): {} -> {}\n was submitted by {}\n".
                       format(task["task_id"], task["source_endpoint"],
                              task["destination_endpoint"],
                              task["owner_string"]))
@@ -117,9 +119,10 @@ def main():
 # on the top level DeleteData
                         for path in files_list:
                             ddata.add_item(path)
-                    print(ddata)
+                    #print(ddata)
                     delete_result = tc.submit_delete(ddata)
-                    print(delete_result)
+                    #print(delete_result)
+                    print("Job to delete data from transfer has been submitted")
 
                     try:
                         acl_list = tc.endpoint_manager_acl_list(
@@ -128,7 +131,7 @@ def main():
                         print("Couldn't get acl list for endpoint ",
                             SOURCE_ENDPOINT_ID)
                         continue
-                    print(acl_list)
+                    #print(acl_list)
 
                     acldict = {i["path"]: i["id"] for i in acl_list}
 
@@ -148,6 +151,8 @@ def main():
                         except:
                             print("Couldn't delete acl rule ",aclid)
                             continue
+                        print("Acl deleted for directory ",
+                            commondir+"/")
 
 if __name__ == '__main__':
     main()
