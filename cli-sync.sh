@@ -71,12 +71,15 @@ SOURCE_PATH='/share/godata/'
 # The directory will be created if it doesn't exist
 DESTINATION_PATH='/~/sync-demo/'
 
-# Sync option
-# Choices are
-#   exists   TODO: add description
-#   size     TODO: add description
-#   mtime    TODO: add description
-#   checksum TODO: add description
+# Sync options:
+#   exists   Copy files that do not exist at the destination.
+#   size     Copy files if the size of the destination does not match the size of the source.
+#   mtime    Copy files if the timestamp of the destination is older than the timestamp of the source.
+#   checksum Copy files if checksums of the source and destination do not match. Files on the destination are never deleted.
+# For more information:
+# $ globus transfer --help
+# < OR >
+# https://docs.globus.org/api/transfer/task_submit/#transfer_and_delete_documents
 SYNCTYPE='checksum'
 
 # Only continue if the previous transfer succeeded or failed
