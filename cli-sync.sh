@@ -10,13 +10,31 @@
 # Visit https://www.globus.org/app/transfer?destination_id=ddb59af0-6d04-11e5-ba46-22000b92c6ec
 # to view the transferred data.
 
+# Globus Tutorial Endpoint 1
+SOURCE_ENDPOINT='ddb59aef-6d04-11e5-ba46-22000b92c6ec'
 
-# Options (endpoints, paths, sync type)
-# are configured below.
+# Globus Tutorial Endpoint 2
+DESTINATION_ENDPOINT='ddb59af0-6d04-11e5-ba46-22000b92c6ec'
+
+# Sample data
+SOURCE_PATH='/share/godata/'
+
+# Destination Path
+# The directory will be created if it doesn't exist
+DESTINATION_PATH='/~/sync-demo/'
+
+# Sync options:
+#   exists   Copy files that do not exist at the destination.
+#   size     Copy files if the size of the destination does not match the size of the source.
+#   mtime    Copy files if the timestamp of the destination is older than the timestamp of the source.
+#   checksum Copy files if checksums of the source and destination do not match. Files on the destination are never deleted.
+# For more information:
+# $ globus transfer --help
+# < OR >
+# https://docs.globus.org/api/transfer/task_submit/#transfer_and_delete_documents
+SYNCTYPE='checksum'
 
 # TODO: add lockfile implementation
-
-# Convenience functions
 
 # always start unset
 unset abort_message
@@ -57,30 +75,6 @@ function check_last_rc () {
 
 # LOCKFILE='/tmp/cli-sync.lock'
 LAST_TRANSFER_ID_FILE='last-transfer-id.txt'
-
-# Globus Tutorial Endpoint 1
-SOURCE_ENDPOINT='ddb59aef-6d04-11e5-ba46-22000b92c6ec'
-
-# Globus Tutorial Endpoint 2
-DESTINATION_ENDPOINT='ddb59af0-6d04-11e5-ba46-22000b92c6ec'
-
-# Sample data
-SOURCE_PATH='/share/godata/'
-
-# Destination Path
-# The directory will be created if it doesn't exist
-DESTINATION_PATH='/~/sync-demo/'
-
-# Sync options:
-#   exists   Copy files that do not exist at the destination.
-#   size     Copy files if the size of the destination does not match the size of the source.
-#   mtime    Copy files if the timestamp of the destination is older than the timestamp of the source.
-#   checksum Copy files if checksums of the source and destination do not match. Files on the destination are never deleted.
-# For more information:
-# $ globus transfer --help
-# < OR >
-# https://docs.globus.org/api/transfer/task_submit/#transfer_and_delete_documents
-SYNCTYPE='checksum'
 
 # Only continue if the previous transfer succeeded or failed
 # Other statuses will mean that previous transfer is either still
