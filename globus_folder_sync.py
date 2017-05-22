@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 
-"""Sync a directory between two Globus endpoints. Authorization only needs to
-happen once, afterwards tokens are saved to disk (MUST BE STORED IN A SECURE
-LOCATION). Store data is already checked for previous transfers, so if this
-script is run twice in quick succession, the second run won't queue a duplicate
-transfer."""
+"""Sync a directory between two Globus endpoints. Defaults:
+
+Source: Globus Tutorial Endpoint 1: /share/godata
+Destination: Globus Tutorial Endpoint 2: /~/sync-demo/
+
+# Checkout the Destination at:
+globus.org/app/transfer?destination_id=ddb59af0-6d04-11e5-ba46-22000b92c6ec
+
+Authorization only needs to happen once, afterwards tokens are saved to disk
+(MUST BE STORED IN A SECURE LOCATION). Store data is already checked for
+previous transfers, so if this script is run twice in quick succession,
+the second run won't queue a duplicate transfer."""
 
 import json
 import sys
@@ -46,7 +53,7 @@ SCOPES = ('openid email profile '
 PREVIOUS_TASK_RUN_CASES = ['SUCCEEDED', 'FAILED']
 
 # Create the destination folder if it does not already exist
-CREATE_DESTINATION_FOLDER = False
+CREATE_DESTINATION_FOLDER = True
 
 
 get_input = getattr(__builtins__, 'raw_input', input)
