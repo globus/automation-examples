@@ -17,6 +17,7 @@ import json
 import sys
 import webbrowser
 import os
+import six
 
 from globus_sdk import (NativeAppAuthClient, TransferClient,
                         RefreshTokenAuthorizer, TransferData)
@@ -227,6 +228,14 @@ def main():
         DESTINATION_ENDPOINT,
         DESTINATION_PATH
     ))
+    url_string = 'globus.org/app/transfer?' + \
+        six.moves.urllib.parse.urlencode({
+            'origin_id': SOURCE_ENDPOINT,
+            'origin_path': SOURCE_PATH,
+            'destination_id': DESTINATION_ENDPOINT,
+            'destination_path': DESTINATION_PATH
+        })
+    print('Visit the link below to see the changes:\n{}'.format(url_string))
 
 
 if __name__ == '__main__':
