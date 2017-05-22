@@ -105,6 +105,7 @@ globus ls "$shared_endpoint:$destination_directory" 1>/dev/null 2>/dev/null
 if [ $? == 0 ]; then
     # if it was, delete it
     if [ -n "$delete" ]; then
+        echo "Destination directory, $destination_directory, exists and will be deleted"
         task_id=`globus delete --jmespath 'task_id' -r "$shared_endpoint:$destination_directory" | tr -d '"'`
         globus task wait --timeout 600 $task_id
         rc=$?
@@ -116,16 +117,20 @@ if [ $? == 0 ]; then
         exit 1
     fi
 fi
-# create a destination subdirectory
+
+echo "Creating destination directory $destination_directory"
 globus mkdir "$shared_endpoint:$destination_directory"
 rc=$?
 check_rc
 
 if [ -n "$user_id" ]; then
+    echo "Granting user, $user_id, read access to the destination directory"
     globus endpoint permission create --identity "$user_id" --permissions r "$shared_endpoint:$destination_directory"
 fi
 if [ -n "$group_uuid" ]; then
+    echo "Granting group, $group_uuid, read access to the destination directory"
     globus endpoint permission create --group $group_uuid --permissions r "$shared_endpoint:$destination_directory"
 fi
 
+echo "Submitting a transfer from $source_endpoint:$source_path to $shared_endpoint:$destination_directory"
 exec globus transfer --recursive --sync-level $sync "$source_endpoint:$source_path" "$shared_endpoint:$destination_directory"

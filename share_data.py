@@ -245,8 +245,7 @@ def share_data(args):
         sys.exit(1)
     print('\ttask_id: {}'.format(task['task_id']))
     print('You can monitor the transfer task programmatically using Globus SDK'
-          ', or, if CLIENT_ID is your user uuid, go to the Web UI, '
-          'https://www.globus.org/app/activity/{}.'
+          ', or go to the Web UI, https://www.globus.org/app/activity/{}.'
           .format(task['task_id']))
 
 
