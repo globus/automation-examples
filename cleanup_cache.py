@@ -2,10 +2,9 @@
 from __future__ import print_function
 
 import globus_sdk
-from globus_sdk import (NativeAppAuthClient, TransferClient,
+from globus_sdk import (TransferClient,
                         AccessTokenAuthorizer)
 from datetime import datetime
-from datetime import tzinfo
 from datetime import timedelta
 from os.path import commonprefix, dirname
 
@@ -51,7 +50,6 @@ def main():
     completion_range = last_cleanup+","+current_time
     print("Cleaning up source endpoint {} \nfor outbound transfers completed in range {}\n ".format(SOURCE_ENDPOINT_ID, completion_range))
 
-
     transfer_token = do_client_authentication(CLIENT_ID, CLIENT_SECRET)
 
     authorizer = AccessTokenAuthorizer(access_token=transfer_token)
@@ -72,7 +70,7 @@ def main():
     if not tasklist:
         print("No transfers from {} found in the last 24 hours, nothing to clean up".format(SOURCE_ENDPOINT_ID))
     else:
-        print("{} total transfers found from {} in the last 24 hours, some may not be of type TRANSFER".format(len(tasklist),SOURCE_ENDPOINT_ID))
+        print("{} total transfers found from {} in the last 24 hours, some may not be of type TRANSFER".format(len(tasklist), SOURCE_ENDPOINT_ID))
     for taskglob in tasklist:
         if (taskglob.data["type"] == "TRANSFER"):
             task = taskglob.data
@@ -83,11 +81,11 @@ def main():
                       format(task["task_id"], task["source_endpoint"],
                              task["destination_endpoint"],
                              task["owner_string"]))
-                #print("task id is ", task["task_id"])
+#                print("task id is ", task["task_id"])
 
                 files_list = [
                     globr["source_path"] for globr in successful_task]
-                print("files list is ",files_list)
+                print("files list is ", files_list)
 
                 # Find the common directory under which all the files live
                 # If one exists, it will be deleted recursively, even if not
@@ -100,8 +98,8 @@ def main():
                         SOURCE_ENDPOINT_ID, path=commondir)
                 except globus_sdk.exc.TransferAPIError:
                     print("Directory {} no longer present on source endpoint,"
-                        .format(commondir)
-                        + " there is nothing to delete\n")
+                          .format(commondir)
+                          + " there is nothing to delete\n")
                     continue
                 if files_list:
                     if commondir:
@@ -119,19 +117,19 @@ def main():
 # on the top level DeleteData
                         for path in files_list:
                             ddata.add_item(path)
-                    #print(ddata)
+#                    print(ddata)
                     delete_result = tc.submit_delete(ddata)
-                    #print(delete_result)
-                    print("Job to delete data from transfer has been submitted")
+#                    print(delete_result)
+                    print("Job to delete data has been submitted")
 
                     try:
                         acl_list = tc.endpoint_manager_acl_list(
                             SOURCE_ENDPOINT_ID)
                     except:
                         print("Couldn't get acl list for endpoint ",
-                            SOURCE_ENDPOINT_ID)
+                              SOURCE_ENDPOINT_ID)
                         continue
-                    #print(acl_list)
+#                    print(acl_list)
 
                     acldict = {i["path"]: i["id"] for i in acl_list}
 
@@ -141,7 +139,7 @@ def main():
                         aclid = acldict[commondir+"/"]
                     except:
                         print("No acl found for directory ",
-                            commondir+"/")
+                              commondir+"/")
                         continue
 
                     if aclid:
@@ -149,10 +147,11 @@ def main():
                             tc.delete_endpoint_acl_rule(
                                 SOURCE_ENDPOINT_ID, aclid)
                         except:
-                            print("Couldn't delete acl rule ",aclid)
+                            print("Couldn't delete acl rule ", aclid)
                             continue
                         print("Acl deleted for directory ",
-                            commondir+"/")
+                              commondir+"/")
+
 
 if __name__ == '__main__':
     main()
