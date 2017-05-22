@@ -161,3 +161,16 @@ Message: The transfer has been accepted and a task has been created and queued f
 Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 ```
 ##### cleanup_cache.py
+There are a few things that are necessary to set up in order to successfully run cleanup_cache.py
+
+There must be a shared endpoint, the transfers from which you wish to monitor and clean up.  You must have a client registered at developers.globus.org, so that the script can request a Client Credential grant from Globus Auth.
+
+The Client Identity Username (typically the Client ID with "@clients.auth.globus.org appended) must be authorized as an administrator of your shared endpoint.
+
+The cleanup_cache.py script will do the following:
+    * Search for successful transfers from your shared endpoint within the last 24 hours
+    * for any successful transfers found, determine if the files transferred were in a common directory, if so, submit a recursive delete request on that directory, if not, submit a delete request for each file from the transfer.
+    * determine if the common directory from the transfer had any specific ACLs set on the endpoint, if so, delete them.
+
+Note:  cleanup_cache.py will find the most specific common directory for all files copied in a transfer.  Thus, if all the files transferred were in /maindir/subdir, it will attempt to recursively delete /maindir/subdir, not /maindir.
+

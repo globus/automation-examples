@@ -18,7 +18,7 @@ CLIENT_ID = '4e6db83a-c767-4e53-ac96-d89b2cbe6577'
 CLIENT_SECRET = 'MWhHZgWo+Z2u2hLB1808dos3qDKw5Q4W3cFhRMTqHYs='
 SCOPES = ('openid email profile '
           'urn:globus:auth:scope:transfer.api.globus.org:all')
-SOURCE_ENDPOINT_ID = '8ce232ee-35b5-11e7-bcd1-22000b9a448b'
+SOURCE_ENDPOINT_ID = '3886dc9c-3eff-11e7-bd15-22000b9a448b'
 
 
 def do_client_authentication(client_id, client_secret,
@@ -68,8 +68,9 @@ def main():
                     fields=task_fields)
     except:
         print("Couldn't get tasks")
-
     tasklist = tasks.data
+    if not tasklist:
+        print("No transfers from {} found in the last 24 hours, nothing to clean up".format(SOURCE_ENDPOINT_ID))
     for taskglob in tasklist:
         if (taskglob.data["type"] == "TRANSFER"):
             task = taskglob.data
