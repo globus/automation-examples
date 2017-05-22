@@ -173,7 +173,7 @@ def share_data(args):
         ddata = globus_sdk.DeleteData(
                 tc,
                 args.shared_endpoint,
-                label='Share Data Sample',
+                label='Share Data Example',
                 recursive=True)
         ddata.add_item(destination_directory)
         print('Submitting a delete task')
@@ -235,7 +235,7 @@ def share_data(args):
             tc,
             args.source_endpoint,
             args.shared_endpoint,
-            label='Share Data Sample')
+            label='Share Data Example')
     tdata.add_item(args.source_path, destination_directory, recursive=True)
     try:
         print('Submitting a transfer task')

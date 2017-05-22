@@ -106,7 +106,7 @@ if [ $? == 0 ]; then
     # if it was, delete it
     if [ -n "$delete" ]; then
         echo "Destination directory, $destination_directory, exists and will be deleted"
-        task_id=`globus delete --jmespath 'task_id' -r "$shared_endpoint:$destination_directory" | tr -d '"'`
+        task_id=`globus delete --jmespath 'task_id' --label 'Share Data Example' -r "$shared_endpoint:$destination_directory" | tr -d '"'`
         globus task wait --timeout 600 $task_id
         rc=$?
         check_rc
@@ -133,4 +133,4 @@ if [ -n "$group_uuid" ]; then
 fi
 
 echo "Submitting a transfer from $source_endpoint:$source_path to $shared_endpoint:$destination_directory"
-exec globus transfer --recursive --sync-level $sync "$source_endpoint:$source_path" "$shared_endpoint:$destination_directory"
+exec globus transfer --recursive --sync-level $sync --label 'Share Data Example' "$source_endpoint:$source_path" "$shared_endpoint:$destination_directory"
