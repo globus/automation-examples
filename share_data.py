@@ -398,7 +398,8 @@ if __name__ == '__main__':
             '--delete', action='store_true',
             help='Delete a destination directory if already exists before '
             'transferring data')
-    parser.add_argument('--auth', choices=APP_AUTHENTICATORS, default=AUTHENTICATION)
+    parser.add_argument('--auth', choices=APP_AUTHENTICATORS,
+                        default=AUTHENTICATION)
     parser.add_argument('--client-secret')
     args = parser.parse_args()
 
