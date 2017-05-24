@@ -222,7 +222,7 @@ def get_confidential_app_authorizer(client_id, client_secret):
 
 def share_data(args):
 
-    user_source_endpoint = args.shared_endpoint or source_endpoint
+    user_source_endpoint = args.source_endpoint or source_endpoint
     user_shared_endpoint = args.shared_endpoint or shared_endpoint
 
     user_source_path = args.source_path or source_path
@@ -398,7 +398,7 @@ if __name__ == '__main__':
             '--delete', action='store_true',
             help='Delete a destination directory if already exists before '
             'transferring data')
-    parser.add_argument('--auth', choices=APP_AUTHENTICATORS, default='native')
+    parser.add_argument('--auth', choices=APP_AUTHENTICATORS, default=AUTHENTICATION)
     parser.add_argument('--client-secret')
     args = parser.parse_args()
 
