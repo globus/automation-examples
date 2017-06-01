@@ -45,8 +45,8 @@ The Python examples are built using the
 
 * `sudo easy_install pip`
 * `sudo pip install virtualenv`
-* `git clone https://github.com/globus/tutorial-examples-automation`
-* `cd tutorial-examples-automation`
+* `git clone https://github.com/globus/automation-examples`
+* `cd automation-examples`
 * `virtualenv venv`
 * `source venv/bin/activate`
 * `pip install -r requirements.txt`
@@ -59,8 +59,8 @@ The Python examples are built using the
 * `sudo apt-get install python-pip`
 * `sudo pip install virtualenv`
 * `sudo apt-get install git`
-* `git clone https://github.com/globus/tutorial-examples-automation`
-* `cd tutorial-examples-automation`
+* `git clone https://github.com/globus/automation-examples`
+* `cd automation-examples`
 * `virtualenv venv`
 * `source venv/bin/activate`
 * `pip install -r requirements.txt`
@@ -72,8 +72,8 @@ The Python examples are built using the
 * Install Python (<https://www.python.org/downloads/windows/>)
 * `pip install virtualenv`
 * Install git (<https://git-scm.com/downloads>)
-* `git clone https://github.com/globus/tutorial-examples-automation`
-* `cd tutorial-examples-automation`
+* `git clone https://github.com/globus/automation-examples`
+* `cd automation-examples`
 * `virtualenv venv`
 * `venv\Scripts\activate`
 * `pip install -r requirements.txt`
