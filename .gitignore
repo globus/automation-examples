@@ -95,3 +95,4 @@ refresh-tokens.json
 
 # store for transfer id
 last-transfer-id.txt
+transfer-data.json

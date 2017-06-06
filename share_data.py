@@ -49,10 +49,12 @@ from globus_sdk.exc import TransferAPIError
 # Create your app at developers.globus.org. The following id is for testing
 # only and should not be relied upon (You should create your own app).
 CLIENT_ID = '079bdf4e-9666-4816-ac01-7eab9dc82b93'
+
 # Client Secret is only needed for Confidential apps. Make your app
 # confidential instead of native by _not_ checking the 'Native App' checkbox
 # on developers.globus.org for your app.
 CLIENT_SECRET = ''
+
 # Native is better for user machines, where the user is capable of hitting
 # a browser to get an authentication code. Native only stores temporary
 # access tokens (unless you enable refresh tokens), and does not require
@@ -74,25 +76,32 @@ CLIENT_SECRET = ''
 # You can also go to globus.org/app/endpoints?scope=shared-by-me and under
 # "Identity/E-mail" set: "<client_id>@clients.auth.globus.org"
 APP_AUTHENTICATORS = ('native', 'client-credentials')
+
 # Default is native for this script.
 AUTHENTICATION = 'native'
+
 # Redirect URI specified when registering a native app
 REDIRECT_URI = 'https://auth.globus.org/v2/web/auth-code'
+
 # For this example, we will be liberal with scopes.
 SCOPES = ('openid email profile '
           'urn:globus:auth:scope:transfer.api.globus.org:all')
+
 TOKEN_FILE = 'refresh-tokens.json'
 
 # Example: Globus Tutorial Endpoint 1
 source_endpoint = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
+
 # Choose which shared folder you want to use.
 # Example: Go to globus.org/app/transfer and select:
 #     Endpoint: Globus Tutorial Endpoint 2
 #     Path: /~/
 #     And click 'share' to create your home directory as the shared endpoint.
 shared_endpoint = ''
+
 # Source data. The example below is three files on Globus Tutorial Endpoint 1
 source_path = '/share/godata'
+
 # Destination on the shared endpoint. Note that this example copies files
 # to the 'root' of the _shared_ endpoint, which in the example above we
 # selected as '/~/'. The final result of this example will be three files
@@ -157,7 +166,12 @@ def do_native_app_authentication(client_id, redirect_uri,
     print('Native App Authorization URL: \n{}'.format(url))
 
     if not is_remote_session():
-        webbrowser.open(url, new=1)
+        # There was a bug in webbrowser recently that this fixes:
+        # https://bugs.python.org/issue30392
+        if sys.platform == 'darwin':
+            webbrowser.get('safari').open(url, new=1)
+        else:
+            webbrowser.open(url, new=1)
 
     auth_code = get_input('Enter the auth code: ').strip()
 
