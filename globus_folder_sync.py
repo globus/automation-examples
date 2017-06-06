@@ -31,15 +31,15 @@ DESTINATION_ENDPOINT = 'ddb59af0-6d04-11e5-ba46-22000b92c6ec'
 SOURCE_PATH = '/share/godata/'
 
 # Destination Path -- The directory will be created if it doesn't exist
-DESTINATION_PATH = '/~/sync-demo'
+DESTINATION_PATH = '/~/sync-demo/'
 
 TRANSFER_LABEL = 'Folder Sync Example'
 
-# You will need to register a *Native App* on https://developers.globus.org/
+# You will need to register a *Native App* at https://developers.globus.org/
 # Your app should include the following:
-# * The scopes should match the SCOPES variable below
-# * Your app's clientid should match the CLIENT_ID var below
-# * "Native App" should be checked
+#     - The scopes should match the SCOPES variable below
+#     - Your app's clientid should match the CLIENT_ID var below
+#     - "Native App" should be checked
 # For more information:
 # https://docs.globus.org/api/auth/developer-guide/#register-app
 CLIENT_ID = '079bdf4e-9666-4816-ac01-7eab9dc82b93'
@@ -49,8 +49,8 @@ SCOPES = ('openid email profile '
           'urn:globus:auth:scope:transfer.api.globus.org:all')
 
 # ONLY run new tasks if there was a previous task and it exited with one of the
-# following status. This is ignored if there was no previous task. The previous
-# task is queried from the DATA_FILE
+# following statuses. This is ignored if there was no previous task.
+# The previous task is queried from the DATA_FILE
 PREVIOUS_TASK_RUN_CASES = ['SUCCEEDED', 'FAILED']
 
 # Create the destination folder if it does not already exist
@@ -74,7 +74,7 @@ def do_native_app_authentication(client_id, redirect_uri,
 
     url = client.oauth2_get_authorize_url()
 
-    print('Native App Authorization URL: \n{}'.format(url))
+    print('Native App Authorization URL:\n{}'.format(url))
 
     if not is_remote_session():
         # There was a bug in webbrowser recently that this fixes:
@@ -135,6 +135,7 @@ def get_tokens():
             save_data_to_file(DATA_FILE, 'tokens', tokens)
         except:
             pass
+
     return tokens
 
 
@@ -153,15 +154,14 @@ def setup_transfer_client(transfer_tokens):
 
     transfer_client = TransferClient(authorizer=authorizer)
 
-    # print out a directory listing from an endpoint
     try:
         transfer_client.endpoint_autoactivate(SOURCE_ENDPOINT)
         transfer_client.endpoint_autoactivate(DESTINATION_ENDPOINT)
     except GlobusAPIError as ex:
-        print(ex)
         if ex.http_status == 401:
             sys.exit('Refresh token has expired. '
-                     'Please delete refresh-tokens.json and try again.')
+                     'Please delete the `tokens` object from '
+                     '{} and try again.'.format(DATA_FILE))
         else:
             raise ex
     return transfer_client

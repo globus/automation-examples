@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# PREREQUISITES
+#
+# The Globus CLI must be installed and have an active login session.
+#
+
+# DESCRIPTION
+#
 # Sync one folder with another, across two endpoints.
 # The sync will recurse through all subdirectories.
 #
@@ -81,9 +88,10 @@ function check_last_rc () {
 
 # Only continue if the previous transfer succeeded or failed
 # Other statuses will mean that previous transfer is either still
-# running, or require human intervention (e.g., PAUSED)
+# running or requires human intervention (e.g., PAUSED)
 
 echo "Checking for a previous transfer"
+
 if [ -e "$LAST_TRANSFER_ID_FILE" ]
 then
     last_transfer_id=$(cat "$LAST_TRANSFER_ID_FILE")
