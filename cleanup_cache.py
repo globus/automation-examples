@@ -46,7 +46,6 @@ CLIENT_SECRET = 'MWhHZgWo+Z2u2hLB1808dos3qDKw5Q4W3cFhRMTqHYs='
 SOURCE_ENDPOINT_ID = '3886dc9c-3eff-11e7-bd15-22000b9a448b'
 
 
-
 def do_client_authentication(client_id, client_secret):
     """
     Does a client authentication and returns a globus transfer token.

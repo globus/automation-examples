@@ -9,11 +9,16 @@
 #
 # Sync one folder with another, across two endpoints.
 # The sync will recurse through all subdirectories.
-# Default values are below:
-
+#
 # Source: Globus Tutorial Endpoint 1: /share/godata
 # Destination: Globus Tutorial Endpoint 2: /~/sync-demo/ # Your account home directory
-
+# 
+# Default values are below in CAPS for
+# SOURCE_ENDPOINT, DESTINATION_ENDPOINT, SOURCE_PATH,
+# DESTINATION_PATH, LAST_TRANSFER_ID_FILE, and SYNCTYPE
+# 
+# Changes these to make this script suit your needs.
+#
 # Visit https://www.globus.org/app/transfer?destination_id=ddb59af0-6d04-11e5-ba46-22000b92c6ec
 # to view the transferred data.
 
@@ -30,6 +35,9 @@ SOURCE_PATH='/share/godata/'
 # The directory will be created if it doesn't exist
 DESTINATION_PATH='/~/sync-demo/'
 
+# Where the ID of the previous transfer (if exists) is stored
+LAST_TRANSFER_ID_FILE='last-transfer-id.txt'
+
 # Sync options:
 #   exists   Copy files that do not exist at the destination.
 #   size     Copy files if the size of the destination does not match the size of the source.
@@ -40,8 +48,6 @@ DESTINATION_PATH='/~/sync-demo/'
 # < OR >
 # https://docs.globus.org/api/transfer/task_submit/#transfer_and_delete_documents
 SYNCTYPE='checksum'
-
-# TODO: add lockfile implementation
 
 # always start unset
 unset abort_message
@@ -80,12 +86,12 @@ function check_last_rc () {
     check_rc "$@"
 }
 
-# LOCKFILE='/tmp/cli-sync.lock'
-LAST_TRANSFER_ID_FILE='last-transfer-id.txt'
-
 # Only continue if the previous transfer succeeded or failed
 # Other statuses will mean that previous transfer is either still
 # running or requires human intervention (e.g., PAUSED)
+
+echo "Checking for a previous transfer"
+
 if [ -e "$LAST_TRANSFER_ID_FILE" ]
 then
     last_transfer_id=$(cat "$LAST_TRANSFER_ID_FILE")
@@ -95,27 +101,30 @@ then
            abort_message="Last transfer $last_transfer_id status is $last_transfer_status, aborting"
            rc=1
            abort
+    else
+        echo "Last transfer $last_transfer_id $last_transfer_status, continuing"
     fi
 fi
 
 # Verify that the source paths is a directory
 globus ls --format json --jmespath 'code' "$SOURCE_ENDPOINT:$SOURCE_PATH" >& /dev/null
-check_last_rc "Could not list source directory"
+check_last_rc "Could not list source directory" "Verified that source is a directory\n"
 
 # Submit sync transfer, get the task ID
-GLOBUS_OUTPUT=$(globus transfer --format json --jmespath 'task_id'  --recursive \
+globus_output=$(globus transfer --format json --jmespath 'task_id'  --recursive \
                        --delete --sync-level $SYNCTYPE \
                        "$SOURCE_ENDPOINT:$SOURCE_PATH" \
                        "$DESTINATION_ENDPOINT:$DESTINATION_PATH")
 
-SUC_MSG="Started sync from $SOURCE_PATH to $DESTINATION_PATH"
+success_msg="Submitted sync from $SOURCE_ENDPOINT:$SOURCE_PATH to $DESTINATION_ENDPOINT:$DESTINATION_PATH"
+source_path_enc=$(echo $SOURCE_PATH | sed 's?/?%%2F?g')
+destination_path_enc=$(echo $DESTINATION_PATH | sed 's?/?%%2F?g')
 # Note the double percent signs and \n for the printf statement
-LINK="Link:\nhttps://www.globus.org/app/transfer?destination_id=${DESTINATION_ENDPOINT}&destination_path=%%2F~%%2F\n"
+link="Link:\nhttps://www.globus.org/app/transfer?origin_id=${SOURCE_ENDPOINT}&origin_path=${source_path_enc}&destination_id=${DESTINATION_ENDPOINT}&destination_path=${destination_path_enc}\n"
 
 # Check status
-check_last_rc "Globus transfer submission failed" "$SUC_MSG\n$LINK"
+check_last_rc "Globus transfer submission failed" "$success_msg\n$link"
 
 # Save ID of new sync transfer
-echo $GLOBUS_OUTPUT | tr -d '"' > "$LAST_TRANSFER_ID_FILE"
-
-# rm -f $LOCKFILE
+echo "Saving sync transfer ID to $LAST_TRANSFER_ID_FILE"
+echo $globus_output | tr -d '"' > "$LAST_TRANSFER_ID_FILE"

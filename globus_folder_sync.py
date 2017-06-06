@@ -77,7 +77,12 @@ def do_native_app_authentication(client_id, redirect_uri,
     print('Native App Authorization URL:\n{}'.format(url))
 
     if not is_remote_session():
-        webbrowser.open(url, new=1)
+        # There was a bug in webbrowser recently that this fixes:
+        # https://bugs.python.org/issue30392
+        if sys.platform == 'darwin':
+            webbrowser.get('safari').open(url, new=1)
+        else:
+            webbrowser.open(url, new=1)
 
     auth_code = get_input('Enter the auth code: ').strip()
 
@@ -222,13 +227,13 @@ def main():
 
     task = transfer.submit_transfer(tdata)
     save_data_to_file(DATA_FILE, 'task', task.data)
-    print('Transfer has been started from {}:{} to {}:{}'.format(
+    print('Transfer has been started from\n  {}:{}\nto\n  {}:{}'.format(
         SOURCE_ENDPOINT,
         SOURCE_PATH,
         DESTINATION_ENDPOINT,
         DESTINATION_PATH
     ))
-    url_string = 'globus.org/app/transfer?' + \
+    url_string = 'https://globus.org/app/transfer?' + \
         six.moves.urllib.parse.urlencode({
             'origin_id': SOURCE_ENDPOINT,
             'origin_path': SOURCE_PATH,
