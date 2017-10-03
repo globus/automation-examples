@@ -1,4 +1,4 @@
-# Developer Tutorial Examples
+# Globus Automation Examples
 Simple code examples for various use cases using Globus.
 
 ## Overview
