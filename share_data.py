@@ -238,6 +238,9 @@ def share_data(args):
 
     user_source_endpoint = args.source_endpoint or source_endpoint
     user_shared_endpoint = args.shared_endpoint or shared_endpoint
+    if not user_shared_endpoint:
+        eprint('Invalid shared endpoint')
+        sys.exit(1)
 
     user_source_path = args.source_path or source_path
     user_destination_path = args.destination_path or destination_path
@@ -383,24 +386,19 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--source-endpoint',
-        required=bool(not source_endpoint),
         help='Source Endpoint UUID where your data is stored.'
     )
     parser.add_argument(
         '--shared-endpoint',
-        required=bool(not shared_endpoint),
         help='The place you will share your data. Create a shared endpoint '
              'by going to globus.org/app/transfer, navigating to your endpoint'
              ' and clicking "share" on a folder.'
     )
     parser.add_argument(
         '--source-path',
-        required=bool(not source_path),
-
     )
     parser.add_argument(
         '--destination-path',
-        required=bool(not destination_path)
     )
     parser.add_argument(
             '--group-uuid',
