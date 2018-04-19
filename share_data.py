@@ -270,6 +270,16 @@ def share_data(args):
         raise ValueError('Invalid Authenticator, this script only understands '
                          'Native and Client Credential')
 
+    # look for an identity uuid for the specified identity username
+    username_uuid = None
+    if args.username:
+        ac = globus_sdk.AuthClient(authorizer=authorizer)
+        r = ac.get_identities(usernames=args.username)
+        if not len(r['identities']):
+            eprint('No such identity username \'{}\''.format(args.username))
+            exit(1)
+        username_uuid = r['identities'][0]['id']
+
     # create a TransferClient object
     tc = globus_sdk.TransferClient(authorizer=authorizer)
 
@@ -341,6 +351,24 @@ def share_data(args):
                 eprint(e)
                 sys.exit(1)
 
+    if username_uuid:
+        rule_data = {
+            "DATA_TYPE": "access",
+            "principal_type": "identity",
+            "principal": username_uuid,
+            "path": destination_directory,
+            "permissions": "r",
+        }
+
+        try:
+            print('Granting user, {}, read access to the destination directory'
+                  .format(username_uuid))
+            tc.add_endpoint_acl_rule(user_shared_endpoint, rule_data)
+        except TransferAPIError as e:
+            if e.code != u'Exists':
+                eprint(e)
+                sys.exit(1)
+
     if args.group_uuid:
         rule_data = {
             "DATA_TYPE": "access",
@@ -351,7 +379,8 @@ def share_data(args):
         }
 
         try:
-            print('Granting group, {}, read access to '.format(args.user_uuid))
+            print('Granting group, {}, read access to '
+                  .format(args.group_uuid))
             tc.add_endpoint_acl_rule(user_shared_endpoint, rule_data)
         except TransferAPIError as e:
             if e.code != u'Exists':
@@ -406,6 +435,10 @@ if __name__ == '__main__':
     parser.add_argument(
             '--user-uuid',
             help='UUID of a user transferred data will be shared with')
+    parser.add_argument(
+            '--username',
+            help='Identity username of a user transferred data will be shared '
+            'with, e.g. johndoe@uchicago.edu')
     parser.add_argument(
             '--delete', action='store_true',
             help='Delete a destination directory if already exists before '
