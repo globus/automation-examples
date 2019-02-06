@@ -23,6 +23,8 @@ from globus_sdk import (NativeAppAuthClient, TransferClient,
                         RefreshTokenAuthorizer, TransferData)
 from globus_sdk.exc import GlobusAPIError, TransferAPIError
 
+from native_login import NativeClient
+
 # Globus Tutorial Endpoint 1
 SOURCE_ENDPOINT = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
 # Globus Tutorial Endpoint 2
@@ -58,38 +60,6 @@ CREATE_DESTINATION_FOLDER = True
 
 
 get_input = getattr(__builtins__, 'raw_input', input)
-
-
-def do_native_app_authentication(client_id, redirect_uri,
-                                 requested_scopes=None):
-    """
-    Does a Native App authentication flow and returns a
-    dict of tokens keyed by service name.
-    """
-    client = NativeAppAuthClient(client_id=client_id)
-    # pass refresh_tokens=True to request refresh tokens
-    client.oauth2_start_flow(requested_scopes=requested_scopes,
-                             redirect_uri=redirect_uri,
-                             refresh_tokens=True)
-
-    url = client.oauth2_get_authorize_url()
-
-    print('Native App Authorization URL:\n{}'.format(url))
-
-    if not is_remote_session():
-        # There was a bug in webbrowser recently that this fixes:
-        # https://bugs.python.org/issue30392
-        if sys.platform == 'darwin':
-            webbrowser.get('safari').open(url, new=1)
-        else:
-            webbrowser.open(url, new=1)
-
-    auth_code = get_input('Enter the auth code: ').strip()
-
-    token_response = client.oauth2_exchange_code_for_tokens(auth_code)
-
-    # return a set of tokens, organized by resource server name
-    return token_response.by_resource_server
 
 
 def load_data_from_file(filepath):
@@ -129,7 +99,8 @@ def get_tokens():
 
     if not tokens:
         # if we need to get tokens, start the Native App authentication process
-        tokens = do_native_app_authentication(CLIENT_ID, REDIRECT_URI, SCOPES)
+        client = NativeClient(client_id=CLIENT_ID)
+        tokens = client.login(requested_scopes=SCOPES)
 
         try:
             save_data_to_file(DATA_FILE, 'tokens', tokens)
