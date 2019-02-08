@@ -15,7 +15,6 @@ the second run won't queue a duplicate transfer."""
 
 import json
 import sys
-import webbrowser
 import os
 import six
 
@@ -49,6 +48,8 @@ DATA_FILE = 'transfer-data.json'
 REDIRECT_URI = 'https://auth.globus.org/v2/web/auth-code'
 SCOPES = ('openid email profile '
           'urn:globus:auth:scope:transfer.api.globus.org:all')
+
+APP_NAME = 'My App'
 
 # ONLY run new tasks if there was a previous task and it exited with one of the
 # following statuses. This is ignored if there was no previous task.
@@ -86,28 +87,7 @@ def update_tokens_file_on_refresh(token_response):
     Callback function passed into the RefreshTokenAuthorizer.
     Will be invoked any time a new access token is fetched.
     """
-    save_data_to_file(DATA_FILE, 'tokens', token_response.by_resource_server)
-
-
-def get_tokens():
-    tokens = None
-    try:
-        # if we already have tokens, load and use them
-        tokens = load_data_from_file(DATA_FILE)['tokens']
-    except:
-        pass
-
-    if not tokens:
-        # if we need to get tokens, start the Native App authentication process
-        client = NativeClient(client_id=CLIENT_ID)
-        tokens = client.login(requested_scopes=SCOPES)
-
-        try:
-            save_data_to_file(DATA_FILE, 'tokens', tokens)
-        except:
-            pass
-
-    return tokens
+    save_data_to_file(DATA_FILE, 'tokens', token_response)
 
 
 def is_remote_session():
@@ -164,8 +144,24 @@ def create_destination_directory(transfer_client, dest_ep, dest_path):
 
 
 def main():
+    tokens = None
+    client = NativeClient(client_id=CLIENT_ID, app_name=APP_NAME)
+    try:
+        # if we already have tokens, load and use them
+        tokens = load_data_from_file(DATA_FILE)['tokens']
+    except:
+        pass
 
-    tokens = get_tokens()
+    if not tokens:
+        # if we need to get tokens, start the Native App authentication process
+        # need to specify that we want refresh tokens
+        tokens = client.login(requested_scopes=SCOPES,
+                              refresh_tokens=True)
+        try:
+            save_data_to_file(DATA_FILE, 'tokens', tokens)
+        except:
+            pass
+
     transfer = setup_transfer_client(tokens['transfer.api.globus.org'])
 
     try:
