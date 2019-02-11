@@ -123,6 +123,9 @@ Saving sync transfer ID to last-transfer-id.txt
 $ cat last-transfer-id.txt
 842ac3d8-39b5-11e7-bcec-22000b9a448b
 ```
+
+**Note**: Both ./globus_folder_sync.py and cli-sync.sh require you to login (see Login section for help).
+
 ##### share_data.py and share-data.sh
 
 The app transfers a directory to a shared endpoint and destination path
@@ -179,6 +182,9 @@ The directory was created successfully
 Message: The transfer has been accepted and a task has been created and queued for execution
 Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 ```
+
+**Note**: Both share_data.py and share-data.sh require you to login (see Login section for help).
+
 ##### cleanup_cache.py
 
 There are a few things that are necessary to set up in order to successfully run [`cleanup_cache.py`](cleanup_cache.py).
@@ -204,3 +210,7 @@ The `cleanup_cache.py` script will do the following:
 Note: `cleanup_cache.py` will find the most specific common directory for all files copied in a transfer.  Thus, if all the files transferred were in `/maindir/subdir`, it will attempt to recursively delete `/maindir/subdir`, not `/maindir`.
 
 Another Note: This script is greedy in how it deletes folders. If someone cherry-picks files, it will still delete the whole directory!
+
+### Login
+
+Some of the scripts require you to login to Globus to ensure that you are an authorized user. The scripts use refresh tokens to save you the trouble of needing to login every time a script is run. For example, if you login when running a script and then run either the same script or a different one, you will not need to login a second time. 
