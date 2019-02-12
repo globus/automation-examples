@@ -344,9 +344,27 @@ if __name__ == '__main__':
         help='Local Endpoint UUID that points to the system you are running the script on.'
     )
     parser.add_argument(
-            '--directory', default='/',
-            help='A directory to start with. By default, it will start from'
-            ' the root "/".')
+        '--directory', default='/',
+        help='A directory to start with. By default, it will start from'
+        ' the root "/".')
+    parser.add_argument(
+        '--output-type',
+        help='The type of output you want. Options are: JSON, Markdown, or HTML.')
+    parser.add_argument(
+        '--recur-indices',
+        help='Recursive indices.')
+    parser.add_argument(
+        '--dest-endpoint',
+        help='Endpoint UUID that you want your data to be uploaded to.')
+    parser.add_argument(
+        '--dest-path',
+        help='The path in the specified that you want your data to be uploaded to.')
+    parser.add_argument(
+        '--include-filter',
+        help='A filter that specifies certain files that you want included from the list.')
+    parser.add_argument(
+        '--exclude-filter',
+        help='A filter that specifies certain files that you want excluded from the list.')
     args = parser.parse_args()
 
     generate_index(args)
