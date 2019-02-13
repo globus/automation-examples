@@ -199,11 +199,11 @@ def get_native_app_authorizer(client_id):
     auth_client = globus_sdk.NativeAppAuthClient(client_id=client_id)
 
     return globus_sdk.RefreshTokenAuthorizer(
-            transfer_tokens['refresh_token'],
-            auth_client,
-            access_token=transfer_tokens['access_token'],
-            expires_at=transfer_tokens['expires_at_seconds'],
-            on_refresh=update_tokens_file_on_refresh)
+        transfer_tokens['refresh_token'],
+        auth_client,
+        access_token=transfer_tokens['access_token'],
+        expires_at=transfer_tokens['expires_at_seconds'],
+        on_refresh=update_tokens_file_on_refresh)
 
 
 def get_human_readable_size(size):
@@ -219,10 +219,10 @@ def get_human_readable_size(size):
         return '{}{}'.format(int(size), suffix)
 
 
-def create_index(directory, files, catalog):
+def create_index(directory, files, catalog, html_output):
 
     html = html_header.format(directory=directory)
-    if directory != '/':
+    if directory != '/' and html_output:
         html += ('<tr><td class="icon back"></td>'
                  '<td><a href="../index.html">Parent Directory</a></td></tr>')
         try:
@@ -235,23 +235,22 @@ def create_index(directory, files, catalog):
         if name.startswith('.') or name == 'index.html':
             continue
         if item['type'] == 'dir':
-            html += folder_row.format(
-                    name=item['name'],
-                    tstamp=item['last_modified'])
+            html += folder_row.format(name=item['name'],
+                                      tstamp=item['last_modified'])
         elif item['type'] == 'file':
-            html += file_row.format(
-                    name=item['name'],
-                    tstamp=item['last_modified'],
-                    size=get_human_readable_size(item['size']))
-            catalog.append({'dir': directory, 'file': item })
+            html += file_row.format(name=item['name'],
+                                    tstamp=item['last_modified'],
+                                    size=get_human_readable_size(item['size']))
+            catalog.append({'dir': directory, 'file': item})
     html += html_footer.format(
-            datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
+        datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
 
-    with open(local_index_dir + directory + '/index.html', 'w') as index_file:
-        index_file.write(html)
+    if html_output:
+        with open(local_index_dir + directory + '/index.html', 'w') as index_file:
+            index_file.write(html)
 
 
-def walk(tc, shared_endpoint, directory, catalog):
+def walk(tc, shared_endpoint, directory, catalog, html_output):
     while True:
         try:
             r = tc.operation_ls(shared_endpoint, path=directory)
@@ -262,19 +261,18 @@ def walk(tc, shared_endpoint, directory, catalog):
         if item['type'] == 'dir' and not item['name'].startswith('.'):
             path = os.path.join(directory, item['name'])
             print(path)
-            walk(tc, shared_endpoint, path, catalog)
+            walk(tc, shared_endpoint, path, catalog, html_output)
 
-    create_index(directory, r['DATA'], catalog)
+    create_index(directory, r['DATA'], catalog, html_output)
 
 
 def upload(tc, local_endpoint, shared_endpoint):
     # transfer data - local directory recursively
-    print("Creating a transfer task with all index.html files...")
-    tdata = globus_sdk.TransferData(
-            tc,
-            local_endpoint,
-            shared_endpoint,
-            label='Upload index html files')
+    print("Creating a transfer task with all index.html and index.md files...")
+    tdata = globus_sdk.TransferData(tc,
+                                    local_endpoint,
+                                    shared_endpoint,
+                                    label='Upload index html and markdown files')
     cwd = os.getcwd()
     for root, dirs, files in os.walk(local_index_dir):
         if 'index.html' in files:
@@ -282,6 +280,12 @@ def upload(tc, local_endpoint, shared_endpoint):
             shared_path = os.path.join(root.replace(local_index_dir, '/'), 'index.html')
             print('{}:{} -> {}:{}'.format(local_endpoint, local_path, shared_endpoint, shared_path))
             tdata.add_item(local_path, shared_path)
+        if 'index.md' in files:
+            local_path = os.path.join(cwd, root, 'index.md')
+            shared_path = os.path.join(root.replace(local_index_dir, '/'), 'index.md')
+            print('{}:{} -> {}:{}'.format(local_endpoint, local_path, shared_endpoint, shared_path))
+            tdata.add_item(local_path, shared_path)
+        
     try:
         print('Submitting a transfer task...')
         task = tc.submit_transfer(tdata)
@@ -298,9 +302,6 @@ def generate_index(args):
 
     catalog = []
 
-    shutil.rmtree(local_index_dir, ignore_errors=True)
-    os.mkdir(local_index_dir)
-
     shared_ept = args.shared_endpoint or shared_endpoint
     if not shared_ept:
         eprint('Invalid shared endpoint')
@@ -316,17 +317,37 @@ def generate_index(args):
     # create a TransferClient object
     tc = globus_sdk.TransferClient(authorizer=authorizer)
 
+    # if HTML and/or Markdown index file was requested, need to create empty temp directory
+    if args.html_output or args.markdown_output:
+        shutil.rmtree(local_index_dir, ignore_errors=True)
+        os.mkdir(local_index_dir)
+        
+        
+        #print('Generating index.html files recursively...')
+
     # list all directories on the shared endpoint recursively
-    # and generate index.html files locally in tmp/
-    print('Generating index.html files recursively...')
-    walk(tc, shared_ept, args.directory, catalog)
+    # and generate index.html files locally in tmp/ (if requested)
+    walk(tc, shared_ept, args.directory, catalog, args.html_output)
 
-    # upload all index.html from tmp/ to the shared endpoint
-    # upload(tc, local_ept, shared_ept)
+    if args.markdown_output:
+        md_path = local_index_dir
+        if args.directory != '/':
+            md_path += args.directory + '/index.md'
+        else:
+            md_path += 'index.md'
+        with open(local_index_dir + args.directory + '/index.md', 'w') as markdown_file:
+            json.dump(catalog, markdown_file)
 
-    f = open('index.json', 'w')
-    json.dump(catalog, f)
-    f.close()
+    print("HERE!")
+    print(args.no_json)
+    if not args.no_json:
+        f = open('index.json', 'w')
+        json.dump(catalog, f)
+        f.close()
+
+    if args.html_output or args.markdown_output:
+        # upload all index files from tmp/ to the shared endpoint
+        upload(tc, local_ept, shared_ept)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -348,10 +369,20 @@ if __name__ == '__main__':
         help='A directory to start with. By default, it will start from'
         ' the root "/".')
     parser.add_argument(
-        '--output-type',
-        help='The type of output you want. Options are: JSON, Markdown, or HTML.')
+        '--no-json', action='store_true', default=False,
+        help='Writes the results to to a JSON file. Include this flag if you do not want'
+        ' the file.')
     parser.add_argument(
-        '--recur-indices',
+        '--html-output', action='store_true', default=False,
+        help='Writes the results to a HTML file and stores files and subdirectories in a'
+        ' specified location (see "dest-path argument for details"). Disabled by default,'
+        ' include this flag if you want the file.')
+    parser.add_argument(
+        '--markdown-output', action='store_true', default=False, 
+        help='Writes the results to a Markdown file. Disabled by default, include this flag'
+        ' if you want the file.')
+    parser.add_argument(
+        '--recursive-indices',
         help='Recursive indices.')
     parser.add_argument(
         '--dest-endpoint',
@@ -367,4 +398,9 @@ if __name__ == '__main__':
         help='A filter that specifies certain files that you want excluded from the list.')
     args = parser.parse_args()
 
-    generate_index(args)
+    no_output = args.no_json and not(args.html_output or args.markdown_output)
+    if no_output:
+        print("No index file type specified.")
+    else:
+        generate_index(args)
+        

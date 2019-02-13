@@ -79,6 +79,8 @@ The Python examples are built using the
 
 ### Running the scripts
 
+**Note**: Some of the examples will require you to login (see Login section for help).
+
 ##### globus_folder_sync.py and cli-sync.sh
 
 The app transfers the `/share/godata/` directory from Tutorial Endpoint 1 to
@@ -123,8 +125,6 @@ Saving sync transfer ID to last-transfer-id.txt
 $ cat last-transfer-id.txt
 842ac3d8-39b5-11e7-bcec-22000b9a448b
 ```
-
-**Note**: Both ./globus_folder_sync.py and cli-sync.sh require you to login (see Login section for help).
 
 ##### share_data.py and share-data.sh
 
@@ -183,7 +183,12 @@ Message: The transfer has been accepted and a task has been created and queued f
 Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 ```
 
-**Note**: Both share_data.py and share-data.sh require you to login (see Login section for help).
+##### gen_index.py
+
+The default behavior of this script is to create a single JSON file that lists all the files, and their attributes, in a given endpoint and path (subdirectories included). The following optional flags affect what kind of output (index) files you get:
+* `--no-json`: this flag stops the script from generating the JSON file
+* `--html-output`: this flag tells the script to generate an index.html file for the given endpoint and path
+* `--markdown-output`: this flag tells the script to generate an index.md file for the given endpoint and path
 
 ##### cleanup_cache.py
 
