@@ -185,10 +185,73 @@ Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 
 ##### gen_index.py
 
-The default behavior of this script is to create a single JSON file that lists all the files, and their attributes, in a given endpoint and path (subdirectories included). The following optional flags affect what kind of output (index) files you get:
+The default behavior of this script is to create a single JSON file that lists all the files, and their attributes, in a given endpoint and path (subdirectories included). The following optional flags can change what kind of output (index) files you get:
 * `--no-json`: this flag stops the script from generating the JSON file
 * `--html-output`: this flag tells the script to generate an index.html file for the given endpoint and path
 * `--markdown-output`: this flag tells the script to generate an index.md file for the given endpoint and path
+
+**Note**: It is assummed that the shared endpoint used in the examples below is the same one from the examples for the share_data.py and share-data.sh scripts. You will also need to set up your own (local) Globus Connect Personal Endpoint (for help see the `How To` found at https://docs.globus.org/how-to/ for your machine)
+
+The examples below demonstrates a few of the possible behaviors of the script.
+
+`Set Up:`
+```
+$ local_ep='' # UUID of your local Globus Connect Personal Endpoint
+$ shared_ep='' # Shared endpoint on Tutorial Endpoint 2
+```
+`Basic (Default) Example:`
+```
+$ ./gen_index.py \ 
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep
+```
+`All Output Files Example:`
+```
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpont $shared_ep \
+    --html-output \
+    --markdown-output
+```
+`HTML & Markdown Files Example:`
+```
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpont $shared_ep \
+    --no-json \
+    --html-output \
+    --markdown-output
+```
+###### Using Filters
+The script also supports `include` and `exclude` filters. Include filters allow you to specify files and directories to include in the list, and stop the script from adding any files or directories not specified in the filters (see the example below).
+```
+# This example tells the script to only list the files and directories in the `sync-demo` and `share-data-demo` folders
+$ include_filters = 'sync-demo share-data-demo'
+$ ./gen_index.py \
+    --local-endoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --include-filter $include_filters
+```
+Similarly, `exclude` filters allow you to specify files and directories that you do not want included in the list (see the example below).
+```
+# This example tells the script to ignore all files named `file1.txt` and any directories called `godata` (and the respective sub-folders and files)
+$ exclude_filters = 'file1.txt godata'
+$ ./gen_index.py \
+    --local-endoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --exclude-filter $exclude_filters
+```
+It is also possible to use both types of filters at the same time (see the example below). In these cases, include filters will always be applied prior to exclude filters.
+```
+# This example tells the script to only list files and directories in the `sync-demo` and `share-data-demo` folders, except for any directories called `godata` and files called `file1.txt`
+$ include_filters = 'sync-demo share-data-demo'
+$ exclude_filters = 'file1.txt godata'
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --include-filter $include_filters \
+    --exclude-filter $exclude_filters
+```
 
 ##### cleanup_cache.py
 
