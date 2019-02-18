@@ -215,14 +215,20 @@ def get_human_readable_size(size):
     suffix = suffixes[i]
     if size < 10.0 and i > 0:
         return '{:.1f}{}'.format(size, suffix)
-    else:
-        return '{}{}'.format(int(size), suffix)
+    return '{}{}'.format(int(size), suffix)
 
 
-def create_index(directory, files, catalog, html_output):
+def create_index(directory, data, catalog, filters):
+    # retrieve the include and exclude filters from the "filters" dictionary
+    include_list = filters['include']
+    exclude_list = filters['exclude']
+
+    # separate original data and filtered data
+    files = data['orig_data']
+    filtered_data = data['filtered_data']
 
     html = html_header.format(directory=directory)
-    if directory != '/' and html_output:
+    if directory != '/' and args.html_output:
         html += ('<tr><td class="icon back"></td>'
                  '<td><a href="../index.html">Parent Directory</a></td></tr>')
         try:
@@ -235,56 +241,142 @@ def create_index(directory, files, catalog, html_output):
         if name.startswith('.') or name == 'index.html':
             continue
         if item['type'] == 'dir':
-            html += folder_row.format(name=item['name'],
-                                      tstamp=item['last_modified'])
+            if item['name'] in filtered_data:
+                html += folder_row.format(name=item['name'],
+                                          tstamp=item['last_modified'])
         elif item['type'] == 'file':
-            html += file_row.format(name=item['name'],
-                                    tstamp=item['last_modified'],
-                                    size=get_human_readable_size(item['size']))
+            if filter_item(name, directory):
+                if not filter_item(name, directory, 1):
+                    html += file_row.format(name=item['name'],
+                                            tstamp=item['last_modified'],
+                                            size=get_human_readable_size(item['size']))
+            elif not filter_item(name, directory, 1):
+                html += file_row.format(name=item['name'],
+                                        tstamp=item['last_modified'],
+                                        size=get_human_readable_size(item['size']))
+            
+        if item['name'] not in exclude_list:
             catalog.append({'dir': directory, 'file': item})
+
     html += html_footer.format(
         datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
-
-    if html_output:
+    
+    if args.html_output:
         with open(local_index_dir + directory + '/index.html', 'w') as index_file:
             index_file.write(html)
 
 
-def walk(tc, shared_endpoint, directory, catalog, html_output):
+def walk(tc, shared_endpoint, directory, catalog):
     while True:
         try:
             r = tc.operation_ls(shared_endpoint, path=directory)
             break
         except (TransferAPIError, GlobusTimeoutError) as e:
             eprint(e)
-    for item in r['DATA']:
-        if item['type'] == 'dir' and not item['name'].startswith('.'):
-            path = os.path.join(directory, item['name'])
-            print(path)
-            walk(tc, shared_endpoint, path, catalog, html_output)
 
-    create_index(directory, r['DATA'], catalog, html_output)
+    # get the filters from args !!!and store them as lists
+    sorted_filters = {'include': args.include_filter, 'exclude': args.exclude_filter}
+
+    filtered_data = []
+    for item in r['DATA']:
+        name = item['name']
+        if item['type'] == 'dir' and not name.startswith('.'):
+            if filter_item(name, directory):
+                if not filter_item(name, directory, 1):
+                    filtered_data.append(name)
+                    path = os.path.join(directory, name)
+                    print(path)
+                    walk(tc, shared_endpoint, path, catalog)
+            elif not filter_item(name, directory, 1):
+                filtered_data.append(name)
+                path = os.path.join(directory, name)
+                print(path)
+                walk(tc, shared_endpoint, path, catalog)
+
+    data = {'orig_data':r['DATA'], 'filtered_data':filtered_data}
+    create_index(directory, data, catalog, sorted_filters)
+
+
+def filter_item(item_name, directory, filter_type=0):
+    """
+    Check if the given item (a file or directory) should be included/excluded.
+    Decision is based on the respective filter (include/exclude), which is specified
+    by the given filter_type. If filter_type is 0 (default value) then the include
+    filter will be checked against, otherwise the exclude_filter will be used.
+    """
+    # check which filter to use
+    filters = None
+    if filter_type:
+        filters = args.exclude_filter
+    else:
+        filters = args.include_filter
+
+    is_sub_dir = False
+    for name in filters:
+        if name in directory:
+            is_sub_dir = True
+        
+    for name in filters:
+        if name.find('/') > 0:
+            names = name.split('/')
+            if item_name in names or is_sub_dir:
+                return True
+        elif item_name in name or is_sub_dir:
+            return True
+
+    return False
 
 
 def upload(tc, local_endpoint, shared_endpoint):
     # transfer data - local directory recursively
     print("Creating a transfer task with all index.html and index.md files...")
-    tdata = globus_sdk.TransferData(tc,
-                                    local_endpoint,
-                                    shared_endpoint,
-                                    label='Upload index html and markdown files')
-    cwd = os.getcwd()
-    for root, dirs, files in os.walk(local_index_dir):
-        if 'index.html' in files:
-            local_path = os.path.join(cwd, root, 'index.html')
-            shared_path = os.path.join(root.replace(local_index_dir, '/'), 'index.html')
-            print('{}:{} -> {}:{}'.format(local_endpoint, local_path, shared_endpoint, shared_path))
-            tdata.add_item(local_path, shared_path)
-        if 'index.md' in files:
-            local_path = os.path.join(cwd, root, 'index.md')
-            shared_path = os.path.join(root.replace(local_index_dir, '/'), 'index.md')
-            print('{}:{} -> {}:{}'.format(local_endpoint, local_path, shared_endpoint, shared_path))
-            tdata.add_item(local_path, shared_path)
+    tdata = None
+    if args.dest_endpoint and args.dest_path:
+        tdata = globus_sdk.TransferData(tc,
+                                        local_endpoint,
+                                        args.dest_endpoint,
+                                        label='Upload index html and markdown files')
+        cwd = os.getcwd()
+        for root, dirs, files in os.walk(local_index_dir):
+            if 'index.html' in files:
+                local_path = os.path.join(cwd, root, 'index.html')
+                dest_path = os.path.join(root.replace(local_index_dir, '/'), 'index.html')
+                print('{}:{} -> {}:{}'.format(local_endpoint,
+                                              local_path,
+                                              args.dest_endpoint,
+                                              dest_path))
+                tdata.add_item(local_path, dest_path)
+            if 'index.md' in files:
+                local_path = os.path.join(cwd, root, 'index.md')
+                dest_path = os.path.join(root.replace(local_index_dir, '/'), 'index.md')
+                print('{}:{} -> {}:{}'.format(local_endpoint,
+                                              local_path,
+                                              args.dest_endpoint,
+                                              dest_path))
+                tdata.add_item(local_path, dest_path)
+    else:
+        tdata = globus_sdk.TransferData(tc,
+                                        local_endpoint,
+                                        shared_endpoint,
+                                        label='Upload index html and markdown files')
+        cwd = os.getcwd()
+        for root, dirs, files in os.walk(local_index_dir):
+            if 'index.html' in files:
+                local_path = os.path.join(cwd, root, 'index.html')
+                shared_path = os.path.join(root.replace(local_index_dir, '/'), 'index.html')
+                print('{}:{} -> {}:{}'.format(local_endpoint,
+                                              local_path,
+                                              shared_endpoint,
+                                              shared_path))
+                tdata.add_item(local_path, shared_path)
+            if 'index.md' in files:
+                local_path = os.path.join(cwd, root, 'index.md')
+                shared_path = os.path.join(root.replace(local_index_dir, '/'), 'index.md')
+                print('{}:{} -> {}:{}'.format(local_endpoint,
+                                              local_path,
+                                              shared_endpoint,
+                                              shared_path))
+                tdata.add_item(local_path, shared_path)
         
     try:
         print('Submitting a transfer task...')
@@ -298,7 +390,7 @@ def upload(tc, local_endpoint, shared_endpoint):
           .format(task['task_id']))
 
 
-def generate_index(args):
+def generate_index():
 
     catalog = []
 
@@ -321,13 +413,10 @@ def generate_index(args):
     if args.html_output or args.markdown_output:
         shutil.rmtree(local_index_dir, ignore_errors=True)
         os.mkdir(local_index_dir)
-        
-        
-        #print('Generating index.html files recursively...')
 
     # list all directories on the shared endpoint recursively
     # and generate index.html files locally in tmp/ (if requested)
-    walk(tc, shared_ept, args.directory, catalog, args.html_output)
+    walk(tc, shared_ept, args.directory, catalog)
 
     if args.markdown_output:
         md_path = local_index_dir
@@ -338,8 +427,6 @@ def generate_index(args):
         with open(local_index_dir + args.directory + '/index.md', 'w') as markdown_file:
             json.dump(catalog, markdown_file)
 
-    print("HERE!")
-    print(args.no_json)
     if not args.no_json:
         f = open('index.json', 'w')
         json.dump(catalog, f)
@@ -385,22 +472,35 @@ if __name__ == '__main__':
         '--recursive-indices',
         help='Recursive indices.')
     parser.add_argument(
-        '--dest-endpoint',
-        help='Endpoint UUID that you want your data to be uploaded to.')
+        '--dest-endpoint', default=None,
+        help='Endpoint UUID that you want your data to be uploaded to. The default'
+        ' UUID is the shared-endpoint. Only specify if you do not want the data to be'
+        ' uploaded to the shared endpoint. If you use this argument, you must also specify a valid'
+        ' path (see dest-path).')
     parser.add_argument(
-        '--dest-path',
-        help='The path in the specified that you want your data to be uploaded to.')
+        '--dest-path', default=None,
+        help='The path in the specified that you want your data to be uploaded to. The default'
+        ' location is the shared-endpoint. Only specify if you do not want the data to be'
+        ' uploaded to the shared endpoint. If you use this argument, you must also specify a valid'
+        ' UUID (see dest-endpoint).')
     parser.add_argument(
-        '--include-filter',
-        help='A filter that specifies certain files that you want included from the list.')
+        '--include-filter', nargs='+', default=[],
+        help='A filter that specifies certain files or directories that you want included from'
+        ' the list. Should be space-separated and files should include extensions. Example: to'
+        ' include file "f1.txt" and directory "files" you would provide this flag with:'
+        ' "f1.txt files". If you want the names to be separated by a different delimiter (i.e.,'
+        ' comma-separated) see the "filter-delimiter" flag.')
     parser.add_argument(
-        '--exclude-filter',
-        help='A filter that specifies certain files that you want excluded from the list.')
+        '--exclude-filter', nargs='+', default=[],
+        help='A filter that specifies certain files that you want excluded from the list.'
+        ' Should be space-separated and files should include extensions. Example: to exclude file'
+        ' "f1.txt" and directory "files" you would provide this flag with: "f1.txt files". If you'
+        ' want the names to be separated by a different delimiter (i.e., comma-separated) see the'
+        ' "filter-delimiter" flag.')
     args = parser.parse_args()
 
     no_output = args.no_json and not(args.html_output or args.markdown_output)
     if no_output:
         print("No index file type specified.")
     else:
-        generate_index(args)
-        
+        generate_index()        
