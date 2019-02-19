@@ -190,22 +190,24 @@ The default behavior of this script is to create a single JSON file that lists a
 * `--html-output`: this flag tells the script to generate an index.html file for the given endpoint and path
 * `--markdown-output`: this flag tells the script to generate an index.md file for the given endpoint and path
 
+A list containing all of the arguments and their descriptions can be obtained by entering `python gen_index.py -h` in the command line.
+
 **Note**: It is assummed that the shared endpoint used in the examples below is the same one from the examples for the share_data.py and share-data.sh scripts. You will also need to set up your own (local) Globus Connect Personal Endpoint (for help see the `How To` found at https://docs.globus.org/how-to/ for your machine)
 
 The examples below demonstrates a few of the possible behaviors of the script.
 
-`Set Up:`
 ```
+# All of the examples for this script will use the following:
 $ local_ep='' # UUID of your local Globus Connect Personal Endpoint
-$ shared_ep='' # Shared endpoint on Tutorial Endpoint 2
+$ shared_ep='' # Shared endpoint (UUID) on Tutorial Endpoint 2
 ```
-`Basic (Default) Example:`
+The example below shows the most basic use for this script.
 ```
 $ ./gen_index.py \ 
     --local-endpoint $local_ep \
     --shared-endpoint $shared_ep
 ```
-`All Output Files Example:`
+The example below is similar to the basic case (example above), but also enables HTML and Markdown index files using the `--html-output` and `--markdown-output` flags respectively.
 ```
 $ ./gen_index.py \
     --local-endpoint $local_ep \
@@ -213,7 +215,7 @@ $ ./gen_index.py \
     --html-output \
     --markdown-output
 ```
-`HTML & Markdown Files Example:`
+The example below disables JSON output by using the `--no-json` flag and enables HTML and Markdown index files using the `--html-output` and `--markdown-output` flags respectively.
 ```
 $ ./gen_index.py \
     --local-endpoint $local_ep \
