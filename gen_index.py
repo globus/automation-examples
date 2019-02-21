@@ -25,8 +25,8 @@ import json
 import datetime
 import shutil
 import globus_sdk
-#import tika
-#from tika import parser
+import tika
+from tika import parser
 from globus_sdk.exc import TransferAPIError, GlobusTimeoutError
 from native_login import NativeClient
 
