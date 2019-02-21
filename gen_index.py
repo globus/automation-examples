@@ -25,6 +25,8 @@ import json
 import datetime
 import shutil
 import globus_sdk
+#import tika
+#from tika import parser
 from globus_sdk.exc import TransferAPIError, GlobusTimeoutError
 from native_login import NativeClient
 
@@ -103,12 +105,30 @@ html_header = ''.join([
     <body>
     <h1>Index of {directory}</h1>
     <table>
-        <tr><th></th><th>Name</th><th>Last modified</th><th>Size</th></tr>
+        <tr><th></th><th>Name (path)</th><th>Last modified</th><th>Size</th></tr>
         <tr><th colspan="4"><hr></th></tr>
     '''
 ])
 
 folder_row = '''
+        <tr>
+            <td class="icon folder"></td>
+            <td>{name} ({directory})</td>
+            <td align="right">{tstamp} </td>
+            <td>-</td>
+        </tr>
+'''
+
+file_row = '''
+        <tr>
+            <td class="icon file"></td>
+            <td>{name} ({directory})</td>
+            <td align="right">{tstamp} </td>
+            <td align="right">{size}</td>
+        </tr>
+'''
+
+folder_row_recur = '''
         <tr>
             <td class="icon folder"></td>
             <td><a href="{name}/index.html">{name}</a> </td>
@@ -117,7 +137,7 @@ folder_row = '''
         </tr>
 '''
 
-file_row = '''
+file_row_recur = '''
         <tr>
             <td class="icon file"></td>
             <td><a href="{name}">{name} </a></td>
@@ -132,6 +152,24 @@ html_footer = '''
     Globus HTTPS Server at ALCF/ANL Petrel; index generated on {}
     </body>
     </html>
+'''
+
+markdown_title = ''.join([
+'''
+# Index of {directory}
+'''
+])
+
+markdown_section = '''
+## {name}
+**Type**: {item_type}
+**Location**: {directory}
+**Last Modified**: {tstamp}
+**Size**: {size}
+'''
+
+markdown_footer = '''
+#### Globus HTTPS Server at ALCF/ANL Petrel; index generated on {}
 '''
 
 get_input = getattr(__builtins__, 'raw_input', input)
@@ -218,14 +256,81 @@ def get_human_readable_size(size):
     return '{}{}'.format(int(size), suffix)
 
 
-def create_index(directory, data, catalog, filters):
+def create_index(catalog, filtered_names):
+    """
+    Creates non-recursive (single) index.html index file.
+    """
+    html = html_header.format(directory=args.directory)
+    if args.directory != '/' and args.html_output:
+        html += ('<tr><td class="icon back"></td>'
+                 '<td><a href="../index.html">Parent Directory</a></td></tr>')
+        try:
+            os.makedirs(local_index_dir + args.directory)
+        except OSError:
+            # Already exists
+            pass
+    for item in catalog:
+        file_data = item['file']
+        html = update_html(html, item, file_data, filtered_names)
+        name = file_data['name']
+        directory = item['dir']
+        if file_data['type'] == 'dir':
+            if name in filtered_names:
+                html += folder_row.format(name=name,
+                                          directory=directory,
+                                          tstamp=file_data['last_modified'])
+        if file_data['type'] == 'file':
+            if filter_item(name, directory) and len(args.include_filter) > 0:
+                if not filter_item(name, directory, 1):
+                    html += file_row.format(name=name,
+                                            directory=directory,
+                                            tstamp=file_data['last_modified'],
+                                            size=get_human_readable_size(file_data['size']))
+            elif not filter_item(name, directory, 1):
+                html += file_row.format(name=name,
+                                        directory=directory,
+                                        tstamp=file_data['last_modified'],
+                                        size=get_human_readable_size(file_data['size']))
+
+    html += html_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
+
+    if args.html_output:
+        with open(local_index_dir + args.directory + '/index.html', 'w') as index_file:
+            index_file.write(html)
+
+
+def update_html(html, item, data, filtered_names):
+    name = data['name']
+    directory = item['dir']
+    if data['type'] == 'dir':
+        if name in filtered_names:
+            html += folder_row.format(name=name,
+                                      directory=directory,
+                                      tstamp=data['last_modified'])
+    if data['type'] == 'file':
+        if filter_item(name, directory):
+            if not filter_item(name, directory, 1):
+                html += file_row.format(name=name,
+                                        directory=directory,
+                                        tstamp=data['last_modified'],
+                                        size=get_human_readable_size(data['size']))
+            elif not filter_item(name, directory, 1):
+                html += file_row.format(name=name,
+                                        directory=directory,
+                                        tstamp=data['last_modified'],
+                                        size=get_human_readable_size(data['size']))
+
+    return html
+
+
+def create_recur_index(directory, data, catalog):
     # retrieve the include and exclude filters from the "filters" dictionary
-    include_list = filters['include']
-    exclude_list = filters['exclude']
+    include_list = args.include_filter
+    exclude_list = args.exclude_filter
 
     # separate original data and filtered data
     files = data['orig_data']
-    filtered_data = data['filtered_data']
+    filtered_names = data['filtered_names']
 
     html = html_header.format(directory=directory)
     if directory != '/' and args.html_output:
@@ -241,17 +346,17 @@ def create_index(directory, data, catalog, filters):
         if name.startswith('.') or name == 'index.html':
             continue
         if item['type'] == 'dir':
-            if item['name'] in filtered_data:
-                html += folder_row.format(name=item['name'],
+            if item['name'] in filtered_names:
+                html += folder_row_recur.format(name=item['name'],
                                           tstamp=item['last_modified'])
-        elif item['type'] == 'file':
+        if item['type'] == 'file':
             if filter_item(name, directory):
                 if not filter_item(name, directory, 1):
-                    html += file_row.format(name=item['name'],
+                    html += file_row_recur.format(name=item['name'],
                                             tstamp=item['last_modified'],
                                             size=get_human_readable_size(item['size']))
             elif not filter_item(name, directory, 1):
-                html += file_row.format(name=item['name'],
+                html += file_row_recur.format(name=item['name'],
                                         tstamp=item['last_modified'],
                                         size=get_human_readable_size(item['size']))
             
@@ -274,27 +379,54 @@ def walk(tc, shared_endpoint, directory, catalog):
         except (TransferAPIError, GlobusTimeoutError) as e:
             eprint(e)
 
-    # get the filters from args !!!and store them as lists
-    sorted_filters = {'include': args.include_filter, 'exclude': args.exclude_filter}
-
+    filtered_names = []
     filtered_data = []
+
     for item in r['DATA']:
         name = item['name']
         if item['type'] == 'dir' and not name.startswith('.'):
-            if filter_item(name, directory):
+            if filter_item(name, directory) and len(args.include_filter) > 0:
                 if not filter_item(name, directory, 1):
-                    filtered_data.append(name)
+                    filtered_names.append(name)
+                    filtered_data.append({'dir': directory, 'file': item})
                     path = os.path.join(directory, name)
                     print(path)
                     walk(tc, shared_endpoint, path, catalog)
-            elif not filter_item(name, directory, 1):
-                filtered_data.append(name)
+            elif not filter_item(name, directory, 1) and len(args.exclude_filter) > 0:
+                filtered_names.append(name)
+                filtered_data.append({'dir': directory, 'file': item})
                 path = os.path.join(directory, name)
                 print(path)
                 walk(tc, shared_endpoint, path, catalog)
+            else:
+                filtered_names.append(name)
+                filtered_data.append({'dir': directory, 'file': item})
+                path = os.path.join(directory, name)
+                print(path)
+                walk(tc, shared_endpoint, path, catalog)
+        elif item['type'] == 'file' and not args.recursive:
+            if filter_item(name, directory) and len(args.include_filter) > 0:
+                if not filter_item(name, directory, 1):
+                    filtered_names.append(name)
+                    filtered_data.append({'dir': directory, 'file': item})
+            elif not filter_item(name, directory, 1) and len(args.exclude_filter) > 0:
+                filtered_names.append(name)
+                filtered_data.append({'dir': directory, 'file': item})
+            else:
+                filtered_names.append(name)
+                filtered_data.append({'dir': directory, 'file': item})
 
-    data = {'orig_data':r['DATA'], 'filtered_data':filtered_data}
-    create_index(directory, data, catalog, sorted_filters)
+    data = {'orig_data':r['DATA'], 'filtered_names':filtered_names}
+    if not args.recursive:
+        for data in filtered_data:
+            catalog.append(data)
+        create_index(catalog, filtered_names)
+    else:
+        create_recur_index(directory, data, catalog)
+
+
+def get_file_folders(data, catalog, path, filtered_data):
+    return        
 
 
 def filter_item(item_name, directory, filter_type=0):
@@ -415,9 +547,14 @@ def generate_index():
         os.mkdir(local_index_dir)
 
     # list all directories on the shared endpoint recursively
-    # and generate index.html files locally in tmp/ (if requested)
+    # and generate index.html and index.md files locally in tmp/ (if requested)
     walk(tc, shared_ept, args.directory, catalog)
 
+    if not args.no_json:
+        f = open('index.json', 'w')
+        json.dump(catalog, f)
+        f.close()
+    
     if args.markdown_output:
         md_path = local_index_dir
         if args.directory != '/':
@@ -425,79 +562,93 @@ def generate_index():
         else:
             md_path += 'index.md'
         with open(local_index_dir + args.directory + '/index.md', 'w') as markdown_file:
-            json.dump(catalog, markdown_file)
-
-    if not args.no_json:
-        f = open('index.json', 'w')
-        json.dump(catalog, f)
-        f.close()
+            path = args.directory
+            markdown = markdown_title.format(directory=path)
+            for item in catalog:
+                file_item = item['file']
+                markdown += markdown_section.format(name=file_item['name'],
+                                                    item_type=file_item['type'],
+                                                    directory=item['dir'],
+                                                    tstamp=file_item['last_modified'],
+                                                    size=get_human_readable_size(file_item['size']))
+            markdown += markdown_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
+            markdown_file.write(markdown)
+            #json.dump(catalog, markdown_file)
 
     if args.html_output or args.markdown_output:
         # upload all index files from tmp/ to the shared endpoint
         upload(tc, local_ept, shared_ept)
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
+    arg_parser = argparse.ArgumentParser(
         description='Recursively list all directories on a shared endpoint,'
         ' generate index.html file for each directory, and upload the'
         ' index.html to the Globus HTTPS server associated with the shared'
         ' endpoint.'
     )
-    parser.add_argument(
+    arg_parser.add_argument(
         '--shared-endpoint',
         help='Shared Endpoint UUID where your data is stored.'
     )
-    parser.add_argument(
+    arg_parser.add_argument(
         '--local-endpoint',
         help='Local Endpoint UUID that points to the system you are running the script on.'
     )
-    parser.add_argument(
+    arg_parser.add_argument(
         '--directory', default='/',
-        help='A directory to start with. By default, it will start from'
-        ' the root "/".')
-    parser.add_argument(
+        help='A directory to start with. By default, it will start from the root "/".')
+    arg_parser.add_argument(
         '--no-json', action='store_true', default=False,
         help='Writes the results to to a JSON file. Include this flag if you do not want'
         ' the file.')
-    parser.add_argument(
+    arg_parser.add_argument(
         '--html-output', action='store_true', default=False,
         help='Writes the results to a HTML file and stores files and subdirectories in a'
         ' specified location (see "dest-path argument for details"). Disabled by default,'
         ' include this flag if you want the file.')
-    parser.add_argument(
+    arg_parser.add_argument(
         '--markdown-output', action='store_true', default=False, 
         help='Writes the results to a Markdown file. Disabled by default, include this flag'
         ' if you want the file.')
-    parser.add_argument(
-        '--recursive-indices',
-        help='Recursive indices.')
-    parser.add_argument(
+    arg_parser.add_argument(
+        '--recursive', action='store_true', default=False,
+        help='Changes the behavior of the script so that the data is split into several'
+        ' (recursive) index files instead of a single large index file.')
+    arg_parser.add_argument(
         '--dest-endpoint', default=None,
         help='Endpoint UUID that you want your data to be uploaded to. The default'
         ' UUID is the shared-endpoint. Only specify if you do not want the data to be'
         ' uploaded to the shared endpoint. If you use this argument, you must also specify a valid'
         ' path (see dest-path).')
-    parser.add_argument(
+    arg_parser.add_argument(
         '--dest-path', default=None,
         help='The path in the specified that you want your data to be uploaded to. The default'
         ' location is the shared-endpoint. Only specify if you do not want the data to be'
         ' uploaded to the shared endpoint. If you use this argument, you must also specify a valid'
         ' UUID (see dest-endpoint).')
-    parser.add_argument(
+    arg_parser.add_argument(
         '--include-filter', nargs='+', default=[],
         help='A filter that specifies certain files or directories that you want included from'
         ' the list. Should be space-separated and files should include extensions. Example: to'
         ' include file "f1.txt" and directory "files" you would provide this flag with:'
-        ' "f1.txt files". If you want the names to be separated by a different delimiter (i.e.,'
-        ' comma-separated) see the "filter-delimiter" flag.')
-    parser.add_argument(
+        ' "f1.txt files".')
+    arg_parser.add_argument(
         '--exclude-filter', nargs='+', default=[],
         help='A filter that specifies certain files that you want excluded from the list.'
         ' Should be space-separated and files should include extensions. Example: to exclude file'
         ' "f1.txt" and directory "files" you would provide this flag with: "f1.txt files". If you'
         ' want the names to be separated by a different delimiter (i.e., comma-separated) see the'
         ' "filter-delimiter" flag.')
-    args = parser.parse_args()
+    arg_parser.add_argument(
+        '--pattern-filter', action='store_true', default=False,
+        help='By default, the (include and exclude) filters check for exact matches. This flag'
+        ' changes that behavior so that the filters use pattern matching. Best used when you'
+        ' want to include/exclude all files/folders of a particular type or with a particular'
+        ' name (e.g., excluding all files that end in ".txt").')
+    arg_parser.add_argument(
+        '--simple-parser', action='store_true', default=False,
+        help='Enables a simple parser that extracts more metadata, but takes longer to run.')
+    args = arg_parser.parse_args()
 
     no_output = args.no_json and not(args.html_output or args.markdown_output)
     if no_output:
