@@ -1,2 +1,2 @@
 globus-sdk>=1.1.0,<=2.0.0
--e git+https://github.com/fair-research/native-login#egg=native-login
+-e git+https://github.com/fair-research/native-login#egg=fair-research-login
