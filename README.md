@@ -254,6 +254,7 @@ $ ./gen_index.py \
     --include-filter $include_filters \
     --exclude-filter $exclude_filters
 ```
+###### Parsing Files
 
 ##### cleanup_cache.py
 

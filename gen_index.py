@@ -28,7 +28,7 @@ import globus_sdk
 import tika
 from tika import parser
 from globus_sdk.exc import TransferAPIError, GlobusTimeoutError
-from native_login import NativeClient
+from fair_research_login import NativeClient
 
 # Native App requires Client IDs. Create your app at developers.globus.org.
 # The following id is for testing only and should not be relied upon (You
@@ -256,19 +256,19 @@ def get_human_readable_size(size):
     return '{}{}'.format(int(size), suffix)
 
 
-def create_index(catalog, filtered_names):
+def create_index(catalog, directory, filtered_names):
     """
     Creates non-recursive (single) index.html index file.
     """
-    html = html_header.format(directory=args.directory)
-    if args.directory != '/' and args.html_output:
-        html += ('<tr><td class="icon back"></td>'
-                 '<td><a href="../index.html">Parent Directory</a></td></tr>')
-        try:
-            os.makedirs(local_index_dir + args.directory)
-        except OSError:
-            # Already exists
-            pass
+    html = html_header.format(directory=directory)
+##    if directory != '/' and args.html_output:
+##        html += ('<tr><td class="icon back"></td>'
+##                 '<td><a href="../index.html">Parent Directory</a></td></tr>')
+##        try:
+##            os.makedirs(local_index_dir + directory)
+##        except OSError:
+##            # Already exists
+##            pass
     for item in catalog:
         file_data = item['file']
         html = update_html(html, item, file_data, filtered_names)
@@ -286,6 +286,8 @@ def create_index(catalog, filtered_names):
                                             directory=directory,
                                             tstamp=file_data['last_modified'],
                                             size=get_human_readable_size(file_data['size']))
+                    if not name.startswith('index.'):
+                        download_file(directory, name)
             elif not filter_item(name, directory, 1):
                 html += file_row.format(name=name,
                                         directory=directory,
@@ -294,9 +296,11 @@ def create_index(catalog, filtered_names):
 
     html += html_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
 
-    if args.html_output:
-        with open(local_index_dir + args.directory + '/index.html', 'w') as index_file:
+    if args.html_output and directory == '/':
+        with open(local_index_dir + directory + '/index.html', 'w') as index_file:
             index_file.write(html)
+
+
 
 
 def update_html(html, item, data, filtered_names):
@@ -324,9 +328,6 @@ def update_html(html, item, data, filtered_names):
 
 
 def create_recur_index(directory, data, catalog):
-    # retrieve the include and exclude filters from the "filters" dictionary
-    include_list = args.include_filter
-    exclude_list = args.exclude_filter
 
     # separate original data and filtered data
     files = data['orig_data']
@@ -360,7 +361,7 @@ def create_recur_index(directory, data, catalog):
                                         tstamp=item['last_modified'],
                                         size=get_human_readable_size(item['size']))
             
-        if item['name'] not in exclude_list:
+        if item['name'] not in args.exclude_filter:
             catalog.append({'dir': directory, 'file': item})
 
     html += html_footer.format(
@@ -381,7 +382,7 @@ def walk(tc, shared_endpoint, directory, catalog):
 
     filtered_names = []
     filtered_data = []
-
+    result = {}
     for item in r['DATA']:
         name = item['name']
         if item['type'] == 'dir' and not name.startswith('.'):
@@ -391,44 +392,51 @@ def walk(tc, shared_endpoint, directory, catalog):
                     filtered_data.append({'dir': directory, 'file': item})
                     path = os.path.join(directory, name)
                     print(path)
-                    walk(tc, shared_endpoint, path, catalog)
-            elif not filter_item(name, directory, 1) and len(args.exclude_filter) > 0:
+                    result = walk(tc, shared_endpoint, path, catalog)
+            elif not filter_item(name, directory, 1):
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
                 path = os.path.join(directory, name)
                 print(path)
-                walk(tc, shared_endpoint, path, catalog)
+                result = walk(tc, shared_endpoint, path, catalog)
             else:
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
                 path = os.path.join(directory, name)
                 print(path)
-                walk(tc, shared_endpoint, path, catalog)
-        elif item['type'] == 'file' and not args.recursive:
+                result = walk(tc, shared_endpoint, path, catalog)
+        elif item['type'] == 'file':
             if filter_item(name, directory) and len(args.include_filter) > 0:
                 if not filter_item(name, directory, 1):
                     filtered_names.append(name)
                     filtered_data.append({'dir': directory, 'file': item})
-            elif not filter_item(name, directory, 1) and len(args.exclude_filter) > 0:
+            elif not filter_item(name, directory, 1):
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
             else:
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
+        if result != {}:
+            result_data = result['items']
+            result_names = result['names']
+            for filtered in result_data:
+                if filtered not in filtered_data:
+                    filtered_data.append(filtered)
+            for filtered in result_names:
+                if filtered not in filtered_names:
+                    filtered_names.append(filtered)
 
     data = {'orig_data':r['DATA'], 'filtered_names':filtered_names}
     if not args.recursive:
         for data in filtered_data:
             catalog.append(data)
-        create_index(catalog, filtered_names)
+        create_index(catalog, directory, filtered_names)
     else:
         create_recur_index(directory, data, catalog)
 
 
-def get_file_folders(data, catalog, path, filtered_data):
-    return        
-
-
+    return {'names': filtered_names, 'items': filtered_data}
+    
 def filter_item(item_name, directory, filter_type=0):
     """
     Check if the given item (a file or directory) should be included/excluded.
@@ -548,7 +556,7 @@ def generate_index():
 
     # list all directories on the shared endpoint recursively
     # and generate index.html and index.md files locally in tmp/ (if requested)
-    walk(tc, shared_ept, args.directory, catalog)
+    filtered = walk(tc, shared_ept, args.directory, catalog)
 
     if not args.no_json:
         f = open('index.json', 'w')
@@ -573,11 +581,75 @@ def generate_index():
                                                     size=get_human_readable_size(file_item['size']))
             markdown += markdown_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
             markdown_file.write(markdown)
-            #json.dump(catalog, markdown_file)
 
     if args.html_output or args.markdown_output:
         # upload all index files from tmp/ to the shared endpoint
         upload(tc, local_ept, shared_ept)
+
+    if args.simple_parser:
+        print('Getting the files and directories to parse:')
+        tdata = globus_sdk.TransferData(tc,
+                                        destination_endpoint=local_ept,
+                                        source_endpoint=shared_ept,
+                                        label='Downloading from Shared to Local')
+        download_data(tc, tdata, shared_ept, args.directory)
+        try:
+            print('\nSubmitting a transfer task...')
+            task = tc.submit_transfer(tdata)
+            completed = tc.task_wait(task["task_id"], timeout=600, polling_interval=15)
+            if completed:
+                print('\ttask_id: {}'.format(task['task_id']))
+                print('You can monitor the transfer task programmatically using Globus SDK'
+                      ', or go to the Web UI, https://www.globus.org/app/activity/{}.'
+                      .format(task['task_id']))
+                print('\nStarting the Simple Parser:')
+                local_path = os.path.join(os.getcwd(), local_index_dir)
+                parsed_data = parse_files(tc,
+                                          local_ept,
+                                          local_path,
+                                          filtered['names'])
+
+                f = open('parsed_results.json', 'w')
+                json.dump(parsed_data, f)
+                f.close()
+            else:
+                print("Transfer task failed to complete within 10 minutes")
+        except TransferAPIError as e:
+            eprint(e)
+            sys.exit(1)
+
+
+def download_data(tc, tdata, shared_ept, directory):
+    """
+    Downloads the data from the given shared endpoint (and directory) to
+    the local/current endpoint and directory. Does not currently support
+    the include/exclude filters.
+    """
+    cwd = os.getcwd()
+    local_path = os.path.join(cwd, local_index_dir)
+    tdata.add_item(directory, local_path, recursive=True)
+
+
+def parse_files(tc, endpoint, directory, filtered_names):
+    os.environ["TIKA_SERVER_ENDPOINT"] = endpoint
+
+    items = []
+    for root, dirs, files in os.walk(directory):
+        for name in files:
+            if not name.startswith('.') and name in filtered_names:
+                path = os.path.join(root, name)
+                parsed = parser.from_file(path)
+                if 'metadata' in parsed.keys():
+                    items.append(parsed['metadata'])
+        for name in dirs:
+            if not name.startswith('.') and name in filtered_names:
+                path = os.path.join(root, name)
+                items = items + parse_files(tc,
+                                            endpoint,
+                                            path,
+                                            filtered_names)
+    return items
+        
     
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(
