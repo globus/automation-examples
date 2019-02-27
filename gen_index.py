@@ -592,7 +592,7 @@ def generate_index():
                                         destination_endpoint=local_ept,
                                         source_endpoint=shared_ept,
                                         label='Downloading from Shared to Local')
-        download_data(tc, tdata, shared_ept, args.directory)
+        download_data(tc, tdata, shared_ept, args.directory, filtered)
         try:
             print('\nSubmitting a transfer task...')
             task = tc.submit_transfer(tdata)
@@ -619,16 +619,41 @@ def generate_index():
             sys.exit(1)
 
 
-def download_data(tc, tdata, shared_ept, directory):
+def download_data(tc, tdata, shared_ept, directory, filtered):
     """
     Downloads the data from the given shared endpoint (and directory) to
     the local/current endpoint and directory. Does not currently support
     the include/exclude filters.
     """
-    cwd = os.getcwd()
-    local_path = os.path.join(cwd, local_index_dir)
-    tdata.add_item(directory, local_path, recursive=True)
+    while True:
+        try:
+            r = tc.operation_ls(shared_ept, path=directory)
+            break
+        except (TransferAPIError, GlobusTimeoutError) as e:
+            eprint(e)
 
+    filtered_names = filtered['names']
+    filtered_data = filtered['items']
+
+    cwd = os.getcwd()
+    for name in filtered_names:
+        for item in filtered_data:
+            file_data = item['file']
+            if file_data['name'] == name:
+                data = file_data
+                file_dir = item['dir']
+                local_path = os.path.normpath(cwd + '/' + local_index_dir +
+                                              '/' + file_dir + '/' + name)
+                source_path = os.path.join(file_dir, name)
+                if file_data['type'] == 'file':
+                    tdata.add_item(source_path, local_path)
+                elif file_data['type'] == 'dir':
+                    if not os.path.exists(local_path):
+                        try:
+                            os.mkdir(local_path)
+                        except OSError:
+                            print('Failed to create directory at path: {}'.format(local_path))
+        
 
 def parse_files(tc, endpoint, directory, filtered_names):
     os.environ["TIKA_SERVER_ENDPOINT"] = endpoint
@@ -638,9 +663,12 @@ def parse_files(tc, endpoint, directory, filtered_names):
         for name in files:
             if not name.startswith('.') and name in filtered_names:
                 path = os.path.join(root, name)
-                parsed = parser.from_file(path)
-                if 'metadata' in parsed.keys():
-                    items.append(parsed['metadata'])
+                try:
+                    parsed = parser.from_file(path)
+                    if 'metadata' in parsed.keys():
+                        items.append(parsed['metadata'])
+                except:
+                    pass
         for name in dirs:
             if not name.startswith('.') and name in filtered_names:
                 path = os.path.join(root, name)

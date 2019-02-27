@@ -255,6 +255,9 @@ $ ./gen_index.py \
     --exclude-filter $exclude_filters
 ```
 ###### Parsing Files
+The script supports the option to parse the files in order to extract more information. Using the `--simple-parser` flag will enable this option and cause the script to parse the files and write the resulting metadata to a `parsed-data.json` file that will be saved to the provided local endpoint and directory. Part of this process will involve downloading all of the files and folders from the shared endpoint to the local endpoint (and their respective directories), which will be stored in a temporary (`tmp`) folder.
+
+**Note**: It is assummed that the `tmp` folder and `parsed-data.json` file do not exist prior to running the script. To avoid errors or overwriting existing data it is recommended to either delete or rename any existing file or folder with those names.
 
 ##### cleanup_cache.py
 
