@@ -399,7 +399,7 @@ def walk(tc, shared_endpoint, directory, catalog):
                 path = os.path.join(directory, name)
                 print(path)
                 result = walk(tc, shared_endpoint, path, catalog)
-            else:
+            elif not len(args.exclude_filter) > 0:
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
                 path = os.path.join(directory, name)
@@ -413,7 +413,7 @@ def walk(tc, shared_endpoint, directory, catalog):
             elif not filter_item(name, directory, 1):
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
-            else:
+            elif not len(args.exclude_filter) > 0:
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
         if result != {}:
@@ -606,8 +606,7 @@ def generate_index():
                 local_path = os.path.join(os.getcwd(), local_index_dir)
                 parsed_data = parse_files(tc,
                                           local_ept,
-                                          local_path,
-                                          filtered['names'])
+                                          local_path)
 
                 f = open('parsed_results.json', 'w')
                 json.dump(parsed_data, f)
@@ -633,6 +632,7 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
             eprint(e)
 
     filtered_names = filtered['names']
+    print(filtered_names)
     filtered_data = filtered['items']
 
     cwd = os.getcwd()
@@ -655,13 +655,13 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
                             print('Failed to create directory at path: {}'.format(local_path))
         
 
-def parse_files(tc, endpoint, directory, filtered_names):
+def parse_files(tc, endpoint, directory):
     os.environ["TIKA_SERVER_ENDPOINT"] = endpoint
 
     items = []
     for root, dirs, files in os.walk(directory):
         for name in files:
-            if not name.startswith('.') and name in filtered_names:
+            if not name.startswith('.'):
                 path = os.path.join(root, name)
                 try:
                     parsed = parser.from_file(path)
@@ -670,12 +670,11 @@ def parse_files(tc, endpoint, directory, filtered_names):
                 except:
                     pass
         for name in dirs:
-            if not name.startswith('.') and name in filtered_names:
+            if not name.startswith('.'):
                 path = os.path.join(root, name)
                 items = items + parse_files(tc,
                                             endpoint,
-                                            path,
-                                            filtered_names)
+                                            path)
     return items
         
     
