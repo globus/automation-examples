@@ -190,23 +190,24 @@ The default behavior of this script is to create a single JSON file that lists a
 * `--html-output`: this flag tells the script to generate an index.html file for the given endpoint and path
 * `--markdown-output`: this flag tells the script to generate an index.md file for the given endpoint and path
 
-A list containing all of the arguments and their descriptions can be obtained by entering `python gen_index.py -h` in the command line.
+A list containing all of the arguments and their descriptions can be obtained by entering `python gen_index.py -h` in the command line. The order that the arguments are given will not affect the behavior of the script.
 
-**Note**: It is assummed that the shared endpoint used in the examples below is the same one from the examples for the share_data.py and share-data.sh scripts. You will also need to set up your own (local) Globus Connect Personal Endpoint (for help see the `How To` found at https://docs.globus.org/how-to/ for your machine)
+**Note**: It is assummed that the shared endpoint used in the examples below is the same one from the examples for the share_data.py and share-data.sh scripts. You will also need to set up your own (local) Globus Connect Personal Endpoint (for help see the `How To` found at https://docs.globus.org/how-to/ for your machine). It is also important to ensure that you have the correct permissions for both the shared and local endpoints. 
 
 The examples below demonstrates a few of the possible behaviors of the script.
-
 ```
 # All of the examples for this script will use the following:
 $ local_ep='' # UUID of your local Globus Connect Personal Endpoint
 $ shared_ep='' # Shared endpoint (UUID) on Tutorial Endpoint 2
 ```
+
 The example below shows the most basic use for this script.
 ```
 $ ./gen_index.py \ 
     --local-endpoint $local_ep \
     --shared-endpoint $shared_ep
 ```
+
 The example below is similar to the basic case (example above), but also enables HTML and Markdown index files using the `--html-output` and `--markdown-output` flags respectively.
 ```
 $ ./gen_index.py \
@@ -215,6 +216,7 @@ $ ./gen_index.py \
     --html-output \
     --markdown-output
 ```
+
 The example below disables JSON output by using the `--no-json` flag and enables HTML and Markdown index files using the `--html-output` and `--markdown-output` flags respectively.
 ```
 $ ./gen_index.py \
@@ -224,7 +226,37 @@ $ ./gen_index.py \
     --html-output \
     --markdown-output
 ```
+
+###### Default Behavior
+In addition to the previously mentioned options, there are certain actions that the script takes by default that can be changed if certain arguments are provided.
+* **Destination Endpoint and Directory**
+    * By default, the script uploads the index files to the provided shared endpoint and it's root (`/`) directory. It is possible to change this behavior by using the `--dest-endpoint` and `--dest-path` arguments to change the upload endpoint and directory respectively. This will only work if BOTH arguments are given; if only one is provided then the script will resort to it's default behavior.
+```
+```
+* **Recursive Index Files (only applies to HTML)**
+    * By default, the script generates a single `index.html` file that lists all of the files and directories, but it is possible to change this behavior by ussing the `--recursive` flag. This flag tells the script to create multiple (smaller) `index.html` files instead of a single large one. This means that every directory (starting from the root, or `tmp`, directory) will have an `index.html` file that lists the contents of that directory (see below for examples).
+```
+```
+Example Directory (before the script):
+* FolderA
+    * File1.txt
+    * Folder2
+        * FileA.txt
+* FolderB
+
+Example Directory (after the script, assume that FolderA and FolderB are in the `tmp` folder):
+* FolderA
+    * File1.txt
+    * index.html
+    * Folder2
+        * FileA.txt
+        * index.html
+* FolderB
+    * index.html
+* index.html
+
 ###### Using Filters
+
 The script also supports `include` and `exclude` filters. Include filters allow you to specify files and directories to include in the list, and stop the script from adding any files or directories not specified in the filters (see the example below).
 ```
 # This example tells the script to only list the files and directories in the `sync-demo` and `share-data-demo` folders
@@ -234,6 +266,7 @@ $ ./gen_index.py \
     --shared-endpoint $shared_ep \
     --include-filter $include_filters
 ```
+
 Similarly, `exclude` filters allow you to specify files and directories that you do not want included in the list (see the example below).
 ```
 # This example tells the script to ignore all files named `file1.txt` and any directories called `godata` (and the respective sub-folders and files)
@@ -243,6 +276,7 @@ $ ./gen_index.py \
     --shared-endpoint $shared_ep \
     --exclude-filter $exclude_filters
 ```
+
 It is also possible to use both types of filters at the same time (see the example below). In these cases, include filters will always be applied prior to exclude filters.
 ```
 # This example tells the script to only list files and directories in the `sync-demo` and `share-data-demo` folders, except for any directories called `godata` and files called `file1.txt`
@@ -255,9 +289,46 @@ $ ./gen_index.py \
     --exclude-filter $exclude_filters
 ```
 ###### Parsing Files
-The script supports the option to parse the files in order to extract more information. Using the `--simple-parser` flag will enable this option and cause the script to parse the files and write the resulting metadata to a `parsed-data.json` file that will be saved to the provided local endpoint and directory. Part of this process will involve downloading all of the files and folders from the shared endpoint to the local endpoint (and their respective directories), which will be stored in a temporary (`tmp`) folder.
+The script also supports the option to parse the files in order to extract more information. Using the `--simple-parser` flag will enable this option and cause the script to parse the files and write the resulting metadata to a `parsed-data.json` file that will be saved to the provided local endpoint. Part of this process will involve downloading all of the files and folders from the shared endpoint to the local endpoint (and their respective directories), which will be stored in a temporary (`tmp`) folder.
 
-**Note**: It is assummed that the `tmp` folder and `parsed-data.json` file do not exist prior to running the script. To avoid errors or overwriting existing data it is recommended to either delete or rename any existing file or folder with those names.
+For details on how the Tika Python parser works, see: https://github.com/chrismattmann/tika-python 
+
+**Note**: It is assummed that the `tmp` folder and `parsed-data.json` file do not exist prior to running the script. To avoid errors or overwriting existing data it is recommended to either delete or rename any existing file or folder with those names. You can also go into the code and change the `local_index_dir` variable if you want the created folder to have a different name. In addition, it is possible to use the `include` and `exclude` filters with the parser; the command for this option is the same as in the Filter examples, just add the `--simple-parser` flag.
+
+The following is an example of the parser's basic behavior.
+```
+# This example generates the HTML and JSON index files, downloads the files from the shared endpont to the local endpoint, and generates a parsed-data.json file that contains the downloaded files metadata.
+$ ./gen_index.py --local-endpoint $local_ep --shared-endpoint $shared_ep --html-output --simple-parser
+/godata
+/share-data-demo
+/share-data-demo/godata
+/share-data-demo/shared_dir
+/sync-demo
+Creating a transfer task with all index.html and index.md files...
+3300136e-2a27-11e9-9351-0e3d676669f4:/Users/<username>/automation-examples/tmp/index.html -> 152ea4ac-28c6-11e9-9836-0262a1f2f698:/index.html
+Submitting a transfer task...
+	task_id: 7ccb41fc-3b80-11e9-9e65-0266b1fe9f9e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/7ccb41fc-3b80-11e9-9e65-0266b1fe9f9e.
+
+Getting the files and directories to parse:
+Failed to create directory at path: /Users/<username>/automation-examples/tmp/share-data-demo/godata
+
+Submitting a transfer task...
+	task_id: 7d16cc58-3b80-11e9-9e65-0266b1fe9f9e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/7d16cc58-3b80-11e9-9e65-0266b1fe9f9e.
+
+Starting the Simple Parser:
+2019-02-28 09:44:41,331 [MainThread  ] [WARNI]  Tika server returned status: 422
+2019-02-28 09:44:41,518 [MainThread  ] [WARNI]  Tika server returned status: 422
+Generating "parsed_results.json" file in: /Users/<username>/automation-examples
+```
+There are a few important things to note from the example above:
+* Getting a "Failed to create directory at path..." message
+    * The purpose of this message is to inform you that the script was unable to create the specified directory (at the given location). The most common cause of this message is that the directory in question already exists.
+    * It is possible to get multiple instances of this message (e.g., if more than one of the directories already exist).
+    * If you see this message then it is recommended that you check to make sure that the directory in question was successfully downloaded and accurately reflects the contents of the shared endpoint and directory that it was downloaded from.
+* Simple Parser - MainThread Warning Status 422
+    * This status code means that the script was unable to parse a file due to it being an unsupported mime-type, encrypted document, etc.
 
 ##### cleanup_cache.py
 

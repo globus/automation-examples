@@ -261,14 +261,6 @@ def create_index(catalog, directory, filtered_names):
     Creates non-recursive (single) index.html index file.
     """
     html = html_header.format(directory=directory)
-##    if directory != '/' and args.html_output:
-##        html += ('<tr><td class="icon back"></td>'
-##                 '<td><a href="../index.html">Parent Directory</a></td></tr>')
-##        try:
-##            os.makedirs(local_index_dir + directory)
-##        except OSError:
-##            # Already exists
-##            pass
     for item in catalog:
         file_data = item['file']
         html = update_html(html, item, file_data, filtered_names)
@@ -587,7 +579,7 @@ def generate_index():
         upload(tc, local_ept, shared_ept)
 
     if args.simple_parser:
-        print('Getting the files and directories to parse:')
+        print('\nGetting the files and directories to parse:')
         tdata = globus_sdk.TransferData(tc,
                                         destination_endpoint=local_ept,
                                         source_endpoint=shared_ept,
@@ -603,11 +595,14 @@ def generate_index():
                       ', or go to the Web UI, https://www.globus.org/app/activity/{}.'
                       .format(task['task_id']))
                 print('\nStarting the Simple Parser:')
+                # Initialize Tika and set environment variables
+                os.environ["TIKA_SERVER_ENDPOINT"] = local_ept
+                tika.initVM()
                 local_path = os.path.join(os.getcwd(), local_index_dir)
                 parsed_data = parse_files(tc,
                                           local_ept,
                                           local_path)
-
+                print('Generating "parsed_results.json" file in: {}'.format(os.getcwd()))
                 f = open('parsed_results.json', 'w')
                 json.dump(parsed_data, f)
                 f.close()
@@ -632,7 +627,6 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
             eprint(e)
 
     filtered_names = filtered['names']
-    print(filtered_names)
     filtered_data = filtered['items']
 
     cwd = os.getcwd()
@@ -656,8 +650,6 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
         
 
 def parse_files(tc, endpoint, directory):
-    os.environ["TIKA_SERVER_ENDPOINT"] = endpoint
-
     items = []
     for root, dirs, files in os.walk(directory):
         for name in files:
