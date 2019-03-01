@@ -26,6 +26,7 @@ import datetime
 import shutil
 import globus_sdk
 import tika
+import fnmatch
 from tika import parser
 from globus_sdk.exc import TransferAPIError, GlobusTimeoutError
 from fair_research_login import NativeClient
@@ -51,7 +52,6 @@ shared_endpoint = '97235036-3749-11e7-bcdc-22000b9a448b'
 
 # Globus Connect Personal Endpoint set up locally
 local_endpoint = ''
-local_index_dir = 'tmp'
 
 # Images and HTML templates needed to create HTML index files
 back_gif = (
@@ -197,16 +197,6 @@ def update_tokens_file_on_refresh(token_response):
     save_tokens_to_file(TOKEN_FILE, token_response.by_resource_server)
 
 
-def is_remote_session():
-    """
-    Check if this is a remote session, in which case we can't open a browser
-    on the users computer. This is required for Native App Authentication (but
-    not a Client Credentials Grant).
-    Returns True on remote session, False otherwise.
-    """
-    return os.environ.get('SSH_TTY', os.environ.get('SSH_CONNECTION'))
-
-
 def eprint(*args, **kwargs):
     """Same as print, but to standard error"""
     args_list = list(args)
@@ -289,10 +279,8 @@ def create_index(catalog, directory, filtered_names):
     html += html_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
 
     if args.html_output and directory == '/':
-        with open(local_index_dir + directory + '/index.html', 'w') as index_file:
+        with open(args.local_index_dir + directory + '/index.html', 'w') as index_file:
             index_file.write(html)
-
-
 
 
 def update_html(html, item, data, filtered_names):
@@ -330,7 +318,7 @@ def create_recur_index(directory, data, catalog):
         html += ('<tr><td class="icon back"></td>'
                  '<td><a href="../index.html">Parent Directory</a></td></tr>')
         try:
-            os.makedirs(local_index_dir + directory)
+            os.makedirs(args.local_index_dir + directory)
         except OSError:
             # Already exists
             pass
@@ -360,7 +348,7 @@ def create_recur_index(directory, data, catalog):
         datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
     
     if args.html_output:
-        with open(local_index_dir + directory + '/index.html', 'w') as index_file:
+        with open(args.local_index_dir + directory + '/index.html', 'w') as index_file:
             index_file.write(html)
 
 
@@ -443,24 +431,18 @@ def filter_item(item_name, directory, filter_type=0):
     else:
         filters = args.include_filter
 
-    is_sub_dir = False
     for name in filters:
-        if name in directory:
-            is_sub_dir = True
-        
-    for name in filters:
-        if name.find('/') > 0:
-            names = name.split('/')
-            if item_name in names or is_sub_dir:
+        if args.case_insensitive:
+            if fnmatch.fnmatch(item_name.lower(), name.lower()):
                 return True
-        elif item_name in name or is_sub_dir:
+        elif fnmatch.fnmatchcase(item_name, name):
             return True
 
     return False
 
 
 def upload(tc, local_endpoint, shared_endpoint):
-    # transfer data - local directory recursively
+    # transfer index files data - local directory recursively
     print("Creating a transfer task with all index.html and index.md files...")
     tdata = None
     if args.dest_endpoint and args.dest_path:
@@ -469,10 +451,10 @@ def upload(tc, local_endpoint, shared_endpoint):
                                         args.dest_endpoint,
                                         label='Upload index html and markdown files')
         cwd = os.getcwd()
-        for root, dirs, files in os.walk(local_index_dir):
+        for root, dirs, files in os.walk(args.local_index_dir):
             if 'index.html' in files:
                 local_path = os.path.join(cwd, root, 'index.html')
-                dest_path = os.path.join(root.replace(local_index_dir, '/'), 'index.html')
+                dest_path = os.path.join(root.replace(args.local_index_dir, '/'), 'index.html')
                 print('{}:{} -> {}:{}'.format(local_endpoint,
                                               local_path,
                                               args.dest_endpoint,
@@ -480,7 +462,7 @@ def upload(tc, local_endpoint, shared_endpoint):
                 tdata.add_item(local_path, dest_path)
             if 'index.md' in files:
                 local_path = os.path.join(cwd, root, 'index.md')
-                dest_path = os.path.join(root.replace(local_index_dir, '/'), 'index.md')
+                dest_path = os.path.join(root.replace(args.local_index_dir, '/'), 'index.md')
                 print('{}:{} -> {}:{}'.format(local_endpoint,
                                               local_path,
                                               args.dest_endpoint,
@@ -492,10 +474,10 @@ def upload(tc, local_endpoint, shared_endpoint):
                                         shared_endpoint,
                                         label='Upload index html and markdown files')
         cwd = os.getcwd()
-        for root, dirs, files in os.walk(local_index_dir):
+        for root, dirs, files in os.walk(args.local_index_dir):
             if 'index.html' in files:
                 local_path = os.path.join(cwd, root, 'index.html')
-                shared_path = os.path.join(root.replace(local_index_dir, '/'), 'index.html')
+                shared_path = os.path.join(root.replace(args.local_index_dir, '/'), 'index.html')
                 print('{}:{} -> {}:{}'.format(local_endpoint,
                                               local_path,
                                               shared_endpoint,
@@ -503,7 +485,7 @@ def upload(tc, local_endpoint, shared_endpoint):
                 tdata.add_item(local_path, shared_path)
             if 'index.md' in files:
                 local_path = os.path.join(cwd, root, 'index.md')
-                shared_path = os.path.join(root.replace(local_index_dir, '/'), 'index.md')
+                shared_path = os.path.join(root.replace(args.local_index_dir, '/'), 'index.md')
                 print('{}:{} -> {}:{}'.format(local_endpoint,
                                               local_path,
                                               shared_endpoint,
@@ -543,25 +525,27 @@ def generate_index():
 
     # if HTML and/or Markdown index file was requested, need to create empty temp directory
     if args.html_output or args.markdown_output:
-        shutil.rmtree(local_index_dir, ignore_errors=True)
-        os.mkdir(local_index_dir)
+        shutil.rmtree(args.local_index_dir, ignore_errors=True)
+        os.mkdir(args.local_index_dir)
 
     # list all directories on the shared endpoint recursively
     # and generate index.html and index.md files locally in tmp/ (if requested)
     filtered = walk(tc, shared_ept, args.directory, catalog)
 
     if not args.no_json:
-        f = open('index.json', 'w')
+        cwd = os.getcwd()
+        json_path = join_path_names(cwd, args.local_index_dir, 'index.json')
+        f = open(json_path, 'w')
         json.dump(catalog, f)
         f.close()
     
     if args.markdown_output:
-        md_path = local_index_dir
+        md_path = args.local_index_dir
         if args.directory != '/':
             md_path += args.directory + '/index.md'
         else:
             md_path += 'index.md'
-        with open(local_index_dir + args.directory + '/index.md', 'w') as markdown_file:
+        with open(args.local_index_dir + args.directory + '/index.md', 'w') as markdown_file:
             path = args.directory
             markdown = markdown_title.format(directory=path)
             for item in catalog:
@@ -575,7 +559,7 @@ def generate_index():
             markdown_file.write(markdown)
 
     if args.html_output or args.markdown_output:
-        # upload all index files from tmp/ to the shared endpoint
+        # upload all index.html and index.md files from tmp/ (in local) to the shared endpoint
         upload(tc, local_ept, shared_ept)
 
     if args.simple_parser:
@@ -598,7 +582,7 @@ def generate_index():
                 # Initialize Tika and set environment variables
                 os.environ["TIKA_SERVER_ENDPOINT"] = local_ept
                 tika.initVM()
-                local_path = os.path.join(os.getcwd(), local_index_dir)
+                local_path = os.path.join(os.getcwd(), args.local_index_dir)
                 parsed_data = parse_files(tc,
                                           local_ept,
                                           local_path)
@@ -616,8 +600,8 @@ def generate_index():
 def download_data(tc, tdata, shared_ept, directory, filtered):
     """
     Downloads the data from the given shared endpoint (and directory) to
-    the local/current endpoint and directory. Does not currently support
-    the include/exclude filters.
+    the local/current endpoint and directory. Supports the include/exclude
+    filters.
     """
     while True:
         try:
@@ -634,10 +618,11 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
         for item in filtered_data:
             file_data = item['file']
             if file_data['name'] == name:
-                data = file_data
                 file_dir = item['dir']
-                local_path = os.path.normpath(cwd + '/' + local_index_dir +
-                                              '/' + file_dir + '/' + name)
+                local_path = os.path.normpath(join_path_names(cwd,
+                                                              args.local_index_dir,
+                                                              file_dir,
+                                                              name))
                 source_path = os.path.join(file_dir, name)
                 if file_data['type'] == 'file':
                     tdata.add_item(source_path, local_path)
@@ -650,10 +635,15 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
         
 
 def parse_files(tc, endpoint, directory):
+    """
+    Goes through the given directory (recursively) and runs the Tika  
+    parser on all of the files except for 'index.' files. Also ignores 
+    hidden (.) directories.
+    """
     items = []
     for root, dirs, files in os.walk(directory):
         for name in files:
-            if not name.startswith('.'):
+            if not name.startswith('.') and not name.startswith('index.'):
                 path = os.path.join(root, name)
                 try:
                     parsed = parser.from_file(path)
@@ -668,7 +658,15 @@ def parse_files(tc, endpoint, directory):
                                             endpoint,
                                             path)
     return items
+
+
+def join_path_names(path_one, path_two, *argv):
+    full_path = os.path.normpath(path_one + '/' + path_two)
+    for arg in argv:
+        full_path = os.path.normpath(full_path + '/' + arg)
         
+    return full_path
+ 
     
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(
@@ -688,6 +686,10 @@ if __name__ == '__main__':
     arg_parser.add_argument(
         '--directory', default='/',
         help='A directory to start with. By default, it will start from the root "/".')
+    arg_parser.add_argument(
+        '--local-index-dir', default='tmp',
+        help='The name of the temporary folder that the data will be stored in. Default'
+        ' name is "tmp".')
     arg_parser.add_argument(
         '--no-json', action='store_true', default=False,
         help='Writes the results to to a JSON file. Include this flag if you do not want'
@@ -731,14 +733,11 @@ if __name__ == '__main__':
         ' want the names to be separated by a different delimiter (i.e., comma-separated) see the'
         ' "filter-delimiter" flag.')
     arg_parser.add_argument(
-        '--pattern-filter', action='store_true', default=False,
-        help='By default, the (include and exclude) filters check for exact matches. This flag'
-        ' changes that behavior so that the filters use pattern matching. Best used when you'
-        ' want to include/exclude all files/folders of a particular type or with a particular'
-        ' name (e.g., excluding all files that end in ".txt").')
-    arg_parser.add_argument(
         '--simple-parser', action='store_true', default=False,
         help='Enables a simple parser that extracts more metadata, but takes longer to run.')
+    arg_parser.add_argument(
+        '--case-insensitive', action='store_true', default=False,
+        help='Changes the include/exclude filter(s) to be case insensitive.')
     args = arg_parser.parse_args()
 
     no_output = args.no_json and not(args.html_output or args.markdown_output)
