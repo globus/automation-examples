@@ -235,6 +235,7 @@ In addition to the previously mentioned options, there are certain actions that 
 ```
 * **Recursive Index Files (only applies to HTML)**
     * By default, the script generates a single `index.html` file that lists all of the files and directories, but it is possible to change this behavior by ussing the `--recursive` flag. This flag tells the script to create multiple (smaller) `index.html` files instead of a single large one. This means that every directory (starting from the root, or `tmp`, directory) will have an `index.html` file that lists the contents of that directory (see below for examples).
+    * This option only applies to the HTML index file(s); enabling this option without the `--html-output` flag will NOT change the script's default behavior.
 ```
 ```
 Example Directory (before the script):
@@ -258,6 +259,8 @@ Example Directory (after the script, assume that FolderA and FolderB are in the 
 ###### Using Filters
 
 The script also supports `include` and `exclude` filters. Include filters allow you to specify files and directories to include in the list, and stop the script from adding any files or directories not specified in the filters (see the example below).
+
+**Note:** When the script checks file and directory names against the filter(s), it is checking for an exact match. This means that if you have a "file1.txt" that you want to exclude, but you pass the argument as "file.txt" then the "file1.txt" will not be excluded. Also, the filters are case-sensitive by default, but this can be changed by using the `--case-insensitive` flag.
 ```
 # This example tells the script to only list the files and directories in the `sync-demo` and `share-data-demo` folders
 $ include_filters = 'sync-demo share-data-demo'
@@ -269,12 +272,13 @@ $ ./gen_index.py \
 
 Similarly, `exclude` filters allow you to specify files and directories that you do not want included in the list (see the example below).
 ```
-# This example tells the script to ignore all files named `file1.txt` and any directories called `godata` (and the respective sub-folders and files)
-$ exclude_filters = 'file1.txt godata'
+# This example tells the script to ignore all files named "file1.txt" and any directories called "godata" (and the respective sub-folders and files). If the '--case-insensitive' flag were not provided then the script would not ignore the previously mentioned files and directories, since the case(s) would not match.
+$ exclude_filters = 'File1.tXt goData'
 $ ./gen_index.py \
     --local-endoint $local_ep \
     --shared-endpoint $shared_ep \
     --exclude-filter $exclude_filters
+    --case-insensitive
 ```
 
 It is also possible to use both types of filters at the same time (see the example below). In these cases, include filters will always be applied prior to exclude filters.
@@ -288,6 +292,19 @@ $ ./gen_index.py \
     --include-filter $include_filters \
     --exclude-filter $exclude_filters
 ```
+
+If you want to filter files or directories that match a certain pattern then you should use Unix shell-style wildcards.
+
+**Note:** If you use wildcards, you will need to provide the filters in-line rather than storing them in a variable, otherwise they will be interpreted differently (e.g., '*.txt' becomes 'requirements.txt').
+```
+# This example tells the script to exclude all files and directories that end in ".txt", and include all files and directories that contain the word "data"
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --exclude-filter '*.txt' \
+    --include-filter '*data*'
+```
+
 ###### Parsing Files
 The script also supports the option to parse the files in order to extract more information. Using the `--simple-parser` flag will enable this option and cause the script to parse the files and write the resulting metadata to a `parsed-data.json` file that will be saved to the provided local endpoint. Part of this process will involve downloading all of the files and folders from the shared endpoint to the local endpoint (and their respective directories), which will be stored in a temporary (`tmp`) folder.
 
@@ -305,30 +322,29 @@ $ ./gen_index.py --local-endpoint $local_ep --shared-endpoint $shared_ep --html-
 /share-data-demo/shared_dir
 /sync-demo
 Creating a transfer task with all index.html and index.md files...
-3300136e-2a27-11e9-9351-0e3d676669f4:/Users/<username>/automation-examples/tmp/index.html -> 152ea4ac-28c6-11e9-9836-0262a1f2f698:/index.html
+3300136e-2a27-11e9-9351-0e3d676669f4:/Users/[username]/automation-examples/tmp/index.html -> 152ea4ac-28c6-11e9-9836-0262a1f2f698:/index.html
 Submitting a transfer task...
 	task_id: 7ccb41fc-3b80-11e9-9e65-0266b1fe9f9e
 You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/7ccb41fc-3b80-11e9-9e65-0266b1fe9f9e.
 
 Getting the files and directories to parse:
-Failed to create directory at path: /Users/<username>/automation-examples/tmp/share-data-demo/godata
+Failed to create directory at path: /Users/[username]/automation-examples/tmp/share-data-demo/godata
 
 Submitting a transfer task...
 	task_id: 7d16cc58-3b80-11e9-9e65-0266b1fe9f9e
 You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/7d16cc58-3b80-11e9-9e65-0266b1fe9f9e.
 
 Starting the Simple Parser:
-2019-02-28 09:44:41,331 [MainThread  ] [WARNI]  Tika server returned status: 422
-2019-02-28 09:44:41,518 [MainThread  ] [WARNI]  Tika server returned status: 422
-Generating "parsed_results.json" file in: /Users/<username>/automation-examples
+Generating "parsed_results.json" file in: /Users/[username]/automation-examples
 ```
-There are a few important things to note from the example above:
+Some things to note from the example above:
 * Getting a "Failed to create directory at path..." message
     * The purpose of this message is to inform you that the script was unable to create the specified directory (at the given location). The most common cause of this message is that the directory in question already exists.
     * It is possible to get multiple instances of this message (e.g., if more than one of the directories already exist).
     * If you see this message then it is recommended that you check to make sure that the directory in question was successfully downloaded and accurately reflects the contents of the shared endpoint and directory that it was downloaded from.
-* Simple Parser - MainThread Warning Status 422
-    * This status code means that the script was unable to parse a file due to it being an unsupported mime-type, encrypted document, etc.
+* /Users/[username]/automation-examples
+    * This path represents the main (local) directory that you are running the script from and may be different for you.
+         * [username] is just a placeholder and will differ depending on the individual.
 
 ##### cleanup_cache.py
 
