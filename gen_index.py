@@ -663,12 +663,6 @@ def parse_files(tc, endpoint, directory):
                         items.append(parsed['metadata'])
                 except:
                     pass
-        for name in dirs:
-            if not name.startswith('.'):
-                path = os.path.join(root, name)
-                items = items + parse_files(tc,
-                                            endpoint,
-                                            path)
     return items
 
 
