@@ -22,7 +22,7 @@ from globus_sdk import (NativeAppAuthClient, TransferClient,
                         RefreshTokenAuthorizer, TransferData)
 from globus_sdk.exc import GlobusAPIError, TransferAPIError
 
-from native_login import NativeClient
+from fair_research_login import NativeClient
 
 # Globus Tutorial Endpoint 1
 SOURCE_ENDPOINT = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
@@ -49,7 +49,7 @@ REDIRECT_URI = 'https://auth.globus.org/v2/web/auth-code'
 SCOPES = ('openid email profile '
           'urn:globus:auth:scope:transfer.api.globus.org:all')
 
-APP_NAME = 'My App'
+APP_NAME = 'Folder Sync Example App'
 
 # ONLY run new tasks if there was a previous task and it exited with one of the
 # following statuses. This is ignored if there was no previous task.
@@ -65,6 +65,8 @@ get_input = getattr(__builtins__, 'raw_input', input)
 
 def load_data_from_file(filepath):
     """Load a set of saved tokens."""
+    if not os.path.exists(filepath):
+        return []
     with open(filepath, 'r') as f:
         tokens = json.load(f)
 
@@ -82,26 +84,13 @@ def save_data_to_file(filepath, key, data):
         json.dump(store, f)
 
 
-def update_tokens_file_on_refresh(token_response):
-    """
-    Callback function passed into the RefreshTokenAuthorizer.
-    Will be invoked any time a new access token is fetched.
-    """
-    save_data_to_file(DATA_FILE, 'tokens', token_response)
-
-
-def is_remote_session():
-    return os.environ.get('SSH_TTY', os.environ.get('SSH_CONNECTION'))
-
-
 def setup_transfer_client(transfer_tokens):
 
     authorizer = RefreshTokenAuthorizer(
         transfer_tokens['refresh_token'],
         NativeAppAuthClient(client_id=CLIENT_ID),
         access_token=transfer_tokens['access_token'],
-        expires_at=transfer_tokens['expires_at_seconds'],
-        on_refresh=update_tokens_file_on_refresh)
+        expires_at=transfer_tokens['expires_at_seconds'])
 
     transfer_client = TransferClient(authorizer=authorizer)
 
@@ -148,7 +137,7 @@ def main():
     client = NativeClient(client_id=CLIENT_ID, app_name=APP_NAME)
     try:
         # if we already have tokens, load and use them
-        tokens = load_data_from_file(DATA_FILE)['tokens']
+        tokens = client.load_tokens(requested_scope=SCOPES)
     except:
         pass
 
@@ -158,7 +147,7 @@ def main():
         tokens = client.login(requested_scopes=SCOPES,
                               refresh_tokens=True)
         try:
-            save_data_to_file(DATA_FILE, 'tokens', tokens)
+            client.save_tokens(tokens)
         except:
             pass
 
