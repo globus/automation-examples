@@ -331,18 +331,20 @@ def create_recur_index(directory, data, catalog):
                 html += folder_row_recur.format(name=item['name'],
                                           tstamp=item['last_modified'])
         if item['type'] == 'file':
-            if filter_item(name, directory):
-                if not filter_item(name, directory, 1):
-                    html += file_row_recur.format(name=item['name'],
-                                            tstamp=item['last_modified'],
-                                            size=get_human_readable_size(item['size']))
-            elif not filter_item(name, directory, 1):
+            if name in filtered_names:
                 html += file_row_recur.format(name=item['name'],
-                                        tstamp=item['last_modified'],
-                                        size=get_human_readable_size(item['size']))
+                                              tstamp=item['last_modified'],
+                                            size=get_human_readable_size(item['size']))
+##            elif not filter_item(name, directory, 1):
+##                html += file_row_recur.format(name=item['name'],
+##                                        tstamp=item['last_modified'],
+##                                        size=get_human_readable_size(item['size']))
             
-        if item['name'] not in args.exclude_filter:
-            catalog.append({'dir': directory, 'file': item})
+        if name not in args.exclude_filter:
+            if len(args.include_filter) > 0 and name in filtered_names:
+                catalog.append({'dir': directory, 'file': item})
+            elif len(args.include_filter) == 0:
+                catalog.append({'dir': directory, 'file': item})
 
     html += html_footer.format(
         datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
@@ -366,13 +368,16 @@ def walk(tc, shared_endpoint, directory, catalog):
     for item in r['DATA']:
         name = item['name']
         if item['type'] == 'dir' and not name.startswith('.'):
-            if filter_item(name, directory) and len(args.include_filter) > 0:
-                if not filter_item(name, directory, 1):
-                    filtered_names.append(name)
-                    filtered_data.append({'dir': directory, 'file': item})
-                    path = os.path.join(directory, name)
-                    print(path)
-                    result = walk(tc, shared_endpoint, path, catalog)
+            # check against include filter
+            if len(args.include_filter) > 0:
+                if filter_item(name, directory): 
+                    # check against exclude filter
+                    if not filter_item(name, directory, 1):
+                        filtered_names.append(name)
+                        filtered_data.append({'dir': directory, 'file': item})
+                        path = os.path.join(directory, name)
+                        print(path)
+                        result = walk(tc, shared_endpoint, path, catalog)
             elif not filter_item(name, directory, 1):
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
@@ -428,8 +433,15 @@ def filter_item(item_name, directory, filter_type=0):
     filters = None
     if filter_type:
         filters = args.exclude_filter
+        if filters == []:
+            if args.include_filter != []:
+                return False
+            else:
+                return True
     else:
         filters = args.include_filter
+        if filters == []:
+            return True
 
     for name in filters:
         if args.case_insensitive:
@@ -523,10 +535,9 @@ def generate_index():
     # create a TransferClient object
     tc = globus_sdk.TransferClient(authorizer=authorizer)
 
-    # if HTML and/or Markdown index file was requested, need to create empty temp directory
-    if args.html_output or args.markdown_output:
-        shutil.rmtree(args.local_index_dir, ignore_errors=True)
-        os.mkdir(args.local_index_dir)
+    # need to create empty temp directory
+    shutil.rmtree(args.local_index_dir, ignore_errors=True)
+    os.mkdir(args.local_index_dir)
 
     # list all directories on the shared endpoint recursively
     # and generate index.html and index.md files locally in tmp/ (if requested)
@@ -535,7 +546,7 @@ def generate_index():
     if not args.no_json:
         cwd = os.getcwd()
         json_path = join_path_names(cwd, args.local_index_dir, 'index.json')
-        f = open(json_path, 'w')
+        f = open(json_path, 'w+')
         json.dump(catalog, f)
         f.close()
     
@@ -615,23 +626,24 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
 
     cwd = os.getcwd()
     for name in filtered_names:
-        for item in filtered_data:
-            file_data = item['file']
-            if file_data['name'] == name:
-                file_dir = item['dir']
-                local_path = os.path.normpath(join_path_names(cwd,
-                                                              args.local_index_dir,
-                                                              file_dir,
-                                                              name))
-                source_path = os.path.join(file_dir, name)
-                if file_data['type'] == 'file':
-                    tdata.add_item(source_path, local_path)
-                elif file_data['type'] == 'dir':
-                    if not os.path.exists(local_path):
-                        try:
-                            os.mkdir(local_path)
-                        except OSError:
-                            print('Failed to create directory at path: {}'.format(local_path))
+        if name != 'index.md' and name != 'index.json' and name != 'index.html':
+            for item in filtered_data:
+                file_data = item['file']
+                if file_data['name'] == name:
+                    file_dir = item['dir']
+                    local_path = os.path.normpath(join_path_names(cwd,
+                                                                  args.local_index_dir,
+                                                                  file_dir,
+                                                                  name))
+                    source_path = os.path.join(file_dir, name)
+                    if file_data['type'] == 'file':
+                        tdata.add_item(source_path, local_path)
+                    elif file_data['type'] == 'dir':
+                        if not os.path.exists(local_path):
+                            try:
+                                os.mkdir(local_path)
+                            except OSError:
+                                print('Failed to create directory at path: {}'.format(local_path))
         
 
 def parse_files(tc, endpoint, directory):
