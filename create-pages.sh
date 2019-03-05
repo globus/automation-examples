@@ -20,10 +20,6 @@
 #   simple-parser       Downloads the (filtered) data from the shared endpoint, parses the data and generates a file containing the parsed data
 #   case-insensitive    Makes the include/exclude filter(s) be case insensitive
 
-
-# gen_index_dir located in Globus Tutorial Endpoint 1
-#SHARED_ENDPOINT='e1e88d04-3c63-11e9-a613-0a54e005f950'
-
 while [ $# -gt 0 ]; do
     key="$1"
     case $1 in
@@ -118,7 +114,7 @@ if [ -z $shared_endpoint ]
         exit 1
 fi
 
-# Basic case: no optional arguments given, will generate a single index.json file
+# Run the gen_index.py script with provided arguments (else statement may be unneccessary)
 if [ ! -z "$args" ]
     then
         ./gen_index.py $args
@@ -126,3 +122,11 @@ if [ ! -z "$args" ]
         echo "args failed: running basic script command (local and shared endpoint arguments only)"
         ./gen_index.py --local-endpoint $local_endpoint --shared-endpoint $shared_endpoint
 fi
+
+# copy all index.* files from tmp (or local_index_dir) to docs/examples/indexgen
+cp tmp/index.* docs/examples/indexgen
+
+# git add, commit, and push for the index files (in docs/examples/indexgen)
+git add docs/examples/indexgen/*
+git commit -m "updating index examples (from create-pages.sh)"
+git push
