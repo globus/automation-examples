@@ -126,6 +126,9 @@ fi
 # copy all index.* files from tmp (or local_index_dir) to docs/examples/indexgen
 cp tmp/index.* docs/examples/indexgen
 
+# update the indexgen.html file in docs/examples/ for listing the index files generated (in gen_index.py script)
+python docs/examples/gen_html.py   
+
 # git add, commit, and push for the index files (in docs/examples/indexgen)
 git add docs/examples/indexgen/*
 git commit -m "updating index examples (from create-pages.sh)"

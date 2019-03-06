@@ -335,10 +335,6 @@ def create_recur_index(directory, data, catalog):
                 html += file_row_recur.format(name=item['name'],
                                               tstamp=item['last_modified'],
                                             size=get_human_readable_size(item['size']))
-##            elif not filter_item(name, directory, 1):
-##                html += file_row_recur.format(name=item['name'],
-##                                        tstamp=item['last_modified'],
-##                                        size=get_human_readable_size(item['size']))
             
         if name not in args.exclude_filter:
             if len(args.include_filter) > 0 and name in filtered_names:
