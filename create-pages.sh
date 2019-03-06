@@ -3,7 +3,7 @@
 # DESCRIPTION
 #
 # 1) Calls the Python gen_index.py script
-# 2) Copies the index files from `tmp` to `docs/examples/indexgen`
+# 2) Copies the index files from `tmp` (or other temporary folder) to `docs/examples/indexgen`
 # 3) Does a `git add`, `git commit`, and `git push` on those (index) files
 
 # Options for generating the index file(s):

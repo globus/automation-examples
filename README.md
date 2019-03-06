@@ -179,6 +179,8 @@ Message: The transfer has been accepted and a task has been created and queued f
 Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 ```
 
+**Note**: Both share_data.py and share-data.sh require you to login (see Login section for help).
+
 ##### gen_index.py
 
 The default behavior of this script is to create a single JSON file that lists all the files, and their attributes, in a given endpoint and path (subdirectories included). The following optional flags can change what kind of output (index) files you get:
@@ -227,13 +229,11 @@ $ ./gen_index.py \
 In addition to the previously mentioned options, there are certain actions that the script takes by default that can be changed if certain arguments are provided.
 * **Destination Endpoint and Directory**
     * By default, the script uploads the index files to the provided shared endpoint and it's root (`/`) directory. It is possible to change this behavior by using the `--dest-endpoint` and `--dest-path` arguments to change the upload endpoint and directory respectively. This will only work if BOTH arguments are given; if only one is provided then the script will resort to it's default behavior.
-```
-```
+    
 * **Recursive Index Files (only applies to HTML)**
     * By default, the script generates a single `index.html` file that lists all of the files and directories, but it is possible to change this behavior by ussing the `--recursive` flag. This flag tells the script to create multiple (smaller) `index.html` files instead of a single large one. This means that every directory (starting from the root, or `tmp`, directory) will have an `index.html` file that lists the contents of that directory (see below for examples).
     * This option only applies to the HTML index file(s); enabling this option without the `--html-output` flag will NOT change the script's default behavior.
-```
-```
+
 Example Directory (before the script):
 * FolderA
     * File1.txt
@@ -311,7 +311,11 @@ For details on how the Tika Python parser works, see: https://github.com/chrisma
 The following is an example of the parser's basic behavior.
 ```
 # This example generates the HTML and JSON index files, downloads the files from the shared endpont to the local endpoint, and generates a parsed-data.json file that contains the downloaded files metadata.
-$ ./gen_index.py --local-endpoint $local_ep --shared-endpoint $shared_ep --html-output --simple-parser
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --html-output \
+    --simple-parser
 /godata
 /share-data-demo
 /share-data-demo/godata
@@ -342,7 +346,59 @@ Some things to note from the example above:
     * This path represents the main (local) directory that you are running the script from and may be different for you.
          * [username] is just a placeholder and will differ depending on the individual.
          
-**Note**: Both share_data.py and share-data.sh require you to login (see Login section for help).
+##### create-pages.sh
+This script calls the gen_index.py script, copies the index files generated from the `tmp` directory to the `docs/examples/indexgen/` directory, and commits and pushes those files to the GitHub repository. The purpose of the script is to automate the process of updating the GitHub Page for the repository.
+
+Things to keep in mind:
+* The GitHub repository that the files will be committed and pushed to is whichever one you are currently on.
+    * In most cases, this should be the `globus/automation-examples` repository.
+    * If you have forked the `globus/automation-examples` or are using a different repository, make sure that that GitHub Pages is set up correctly for your repository (see steps below)
+        * Step 1) Go to your GitHub repository
+        * Step 2) Navigate to the `GitHub Pages Settings (Settings -> GitHub Pages)`
+        * Step 3) For `Source` choose `master branch /docs folder`
+    * Make sure that you are in the `master` branch, as GitHub Pages does not look at any of the other branches.
+* The arguments that the script takes are the same as the arguments for running the `gen_index.py` script (see below for an example)
+```
+$ local_ep='' # UUID of your local Globus Connect Personal Endpoint
+$ shared_ep='' # Shared endpoint (UUID) on Tutorial Endpoint 2
+$ ./create-pages.sh \
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --simple-parser \
+    --markdown-output
+/godata
+/share-data-demo
+/share-data-demo/godata
+/share-data-demo/shared_dir
+/sync-demo
+Creating a transfer task with all index.html and index.md files...
+3300136e-2a27-11e9-9351-0e3d676669f4:/Users/[username]/automation-examples/tmp/index.md -> 152ea4ac-28c6-11e9-9836-0262a1f2f698:/index.md
+Submitting a transfer task...
+	task_id: 2c10f088-3f84-11e9-9e69-0266b1fe9f9e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/2c10f088-3f84-11e9-9e69-0266b1fe9f9e.
+
+Getting the files and directories to parse:
+Failed to create directory at path: /Users/[username]/automation-examples/tmp/share-data-demo/godata
+
+Submitting a transfer task...
+	task_id: 2c6424a6-3f84-11e9-9e69-0266b1fe9f9e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/2c6424a6-3f84-11e9-9e69-0266b1fe9f9e.
+
+Starting the Simple Parser:
+Generating "parsed_results.json" file in: /Users/[username]/automation-examples
+[master cd86fbd] updating index examples (from create-pages.sh)
+ 2 files changed, 257 insertions(+)
+ create mode 100644 docs/examples/indexgen/index.json
+ create mode 100644 docs/examples/indexgen/index.md
+Counting objects: 7, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 1.48 KiB | 1.48 MiB/s, done.
+Total 7 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/globus/automation-examples.git
+   b1d293a..cd86fbd  master -> master
+```
 
 ##### cleanup_cache.py
 
