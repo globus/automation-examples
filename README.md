@@ -229,7 +229,7 @@ $ ./gen_index.py \
 In addition to the previously mentioned options, there are certain actions that the script takes by default that can be changed if certain arguments are provided.
 * **Destination Endpoint and Directory**
     * By default, the script uploads the index files to the provided shared endpoint and it's root (`/`) directory. It is possible to change this behavior by using the `--dest-endpoint` and `--dest-path` arguments to change the upload endpoint and directory respectively. This will only work if BOTH arguments are given; if only one is provided then the script will resort to it's default behavior.
-    
+
 * **Recursive Index Files (only applies to HTML)**
     * By default, the script generates a single `index.html` file that lists all of the files and directories, but it is possible to change this behavior by ussing the `--recursive` flag. This flag tells the script to create multiple (smaller) `index.html` files instead of a single large one. This means that every directory (starting from the root, or `tmp`, directory) will have an `index.html` file that lists the contents of that directory (see below for examples).
     * This option only applies to the HTML index file(s); enabling this option without the `--html-output` flag will NOT change the script's default behavior.
@@ -358,6 +358,7 @@ Things to keep in mind:
         * Step 3) For `Source` choose `master branch /docs folder`
     * Make sure that you are in the `master` branch, as GitHub Pages does not look at any of the other branches.
 * The arguments that the script takes are the same as the arguments for running the `gen_index.py` script (see below for an example)
+* The script assumes that the `docs`, `docs/examples`, and `docs/examples/indexgen` directories already exist (in the root directory).
 ```
 $ local_ep='' # UUID of your local Globus Connect Personal Endpoint
 $ shared_ep='' # Shared endpoint (UUID) on Tutorial Endpoint 2
