@@ -82,7 +82,7 @@ def generate_file():
             print(name)
             path = os.path.join(args.directory, name)
             html += file_row.format(name=name,
-                                    directory=path)
+                                    directory='/' + path)
 
     html += html_footer
     file_path = os.path.join('docs/examples/', args.file_name)
