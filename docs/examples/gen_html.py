@@ -77,12 +77,15 @@ def generate_file():
     """
     print("\nGenerating the HTML file")
     html = html_header.format(directory=args.directory)
-    for root, dirs, files in os.walk(args.directory):
+    cwd = os.getcwd()
+    path = os.path.normpath(os.path.join(cwd, 'docs/examples', args.directory))
+    print(path)
+    for root, dirs, files in os.walk(path):
         for name in files:
             print(name)
-            path = os.path.join(args.directory, name)
+            file_path = os.path.normpath(os.path.join(path, name))
             html += file_row.format(name=name,
-                                    directory='/' + path)
+                                    directory=file_path)
 
     html += html_footer
     file_path = os.path.join('docs/examples/', args.file_name)
@@ -95,7 +98,7 @@ if __name__ == '__main__':
         ' the files in a directory.'
     )
     parser.add_argument(
-        '--directory', default='docs/examples/indexgen',
+        '--directory', default='indexgen',
         help='The directory that the files/folders are located in. By'
         ' default, it is set to the "indexgen" directory.')
     parser.add_argument(
