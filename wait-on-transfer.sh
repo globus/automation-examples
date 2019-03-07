@@ -49,7 +49,7 @@ do
     if [ "$max_wait" -lt $current_wait ]
     then
         echo "Maximum wait time of $max_wait seconds exceeded, transfer is still ACTIVE"
-        exit 0
+        exit 1
     fi
        
     transfer_status=$(globus task show --format json --jmespath 'status' $transfer_id | tr -d '"')
