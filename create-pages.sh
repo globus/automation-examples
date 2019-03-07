@@ -130,6 +130,6 @@ cp tmp/index.* docs/examples/indexgen
 python docs/examples/gen_html.py   
 
 # git add, commit, and push for the index files (in docs/examples/indexgen)
-git add docs/examples/indexgen/*
+git add docs/examples/indexgen/* docs/examples/indexgen.html
 git commit -m "updating index examples (from create-pages.sh)"
 git push

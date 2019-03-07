@@ -58,7 +58,7 @@ html_header = ''.join([
 file_row = '''
         <tr>
             <td class="icon file"></td>
-            <td><a href="{directory}/{name}">{name}</a></td>
+            <td><a href="{directory}">{name}</a></td>
         </tr>
 '''
 
@@ -75,6 +75,7 @@ def generate_file():
     """
     Goes through the directory and updates the HTML file.
     """
+    print("\nGenerating the HTML file")
     html = html_header.format(directory=args.directory)
     for root, dirs, files in os.walk(args.directory):
         for name in files:
