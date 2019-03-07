@@ -79,7 +79,6 @@ def generate_file():
     html = html_header.format(directory=args.directory)
     cwd = os.getcwd()
     path = os.path.normpath(os.path.join(cwd, 'docs/examples', args.directory))
-    print(path)
     for root, dirs, files in os.walk(path):
         for name in files:
             print(name)
