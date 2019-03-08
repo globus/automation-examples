@@ -83,6 +83,9 @@ celerybeat-schedule
 venv/
 ENV/
 
+# Tika config file
+tika-config.xml
+
 # Spyder project settings
 .spyderproject
 
@@ -96,3 +99,7 @@ refresh-tokens.json
 # store for transfer id
 last-transfer-id.txt
 transfer-data.json
+
+# MAC specific .DS_Store
+.DS_Store
+**/.DS_Store
