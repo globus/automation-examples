@@ -105,8 +105,8 @@ html_header = ''.join([
     <body>
     <h1>Index of {directory}</h1>
     <table>
-        <tr><th></th><th>Name (path)</th><th>Last modified</th><th>Size</th></tr>
-        <tr><th colspan="4"><hr></th></tr>
+        <tr><th></th><th>Name (path)</th><th>Last modified</th><th>Size</th><th>Link</th></tr>
+        <tr><th colspan="5"><hr></th></tr>
     '''
 ])
 
@@ -115,6 +115,7 @@ folder_row = '''
             <td class="icon folder"></td>
             <td>{name} ({directory})</td>
             <td align="right">{tstamp} </td>
+            <td>-</td>
             <td>-</td>
         </tr>
 '''
@@ -125,6 +126,7 @@ file_row = '''
             <td>{name} ({directory})</td>
             <td align="right">{tstamp} </td>
             <td align="right">{size}</td>
+            <td align="right"><{link}</td>
         </tr>
 '''
 
@@ -133,6 +135,7 @@ folder_row_recur = '''
             <td class="icon folder"></td>
             <td><a href="{name}/index.html">{name}</a> </td>
             <td align="right">{tstamp} </td>
+            <td>-</td>
             <td>-</td>
         </tr>
 '''
@@ -143,11 +146,12 @@ file_row_recur = '''
             <td><a href="{name}">{name} </a></td>
             <td align="right">{tstamp} </td>
             <td align="right">{size}</td>
+            <td align="right">{link}</td>
         </tr>
 '''
 
 html_footer = '''
-        <tr><th colspan="4"><hr></th></tr>
+        <tr><th colspan="5"><hr></th></tr>
     </table>
     Globus HTTPS Server at ALCF/ANL Petrel; index generated on {}
     </body>
@@ -162,6 +166,7 @@ markdown_title = ''.join([
 
 markdown_section = '''
 ## {name}
+### {link}
 **Type**: {item_type}
 **Location**: {directory}
 **Last Modified**: {tstamp}
@@ -268,8 +273,6 @@ def create_index(catalog, directory, filtered_names):
                                             directory=directory,
                                             tstamp=file_data['last_modified'],
                                             size=get_human_readable_size(file_data['size']))
-                    if not name.startswith('index.'):
-                        download_file(directory, name)
             elif not filter_item(name, directory, 1):
                 html += file_row.format(name=name,
                                         directory=directory,
