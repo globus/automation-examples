@@ -24,12 +24,13 @@ import argparse
 import json
 import datetime
 import shutil
-import globus_sdk
-import tika
 import fnmatch
-from tika import parser
+import urllib
+import globus_sdk
 from globus_sdk.exc import TransferAPIError, GlobusTimeoutError
 from fair_research_login import NativeClient
+import tika
+from tika import parser
 
 # Native App requires Client IDs. Create your app at developers.globus.org.
 # The following id is for testing only and should not be relied upon (You
@@ -105,8 +106,8 @@ html_header = ''.join([
     <body>
     <h1>Index of {directory}</h1>
     <table>
-        <tr><th></th><th>Name (path)</th><th>Last modified</th><th>Size</th><th>Link</th></tr>
-        <tr><th colspan="5"><hr></th></tr>
+        <tr><th></th><th>Name (path)</th><th>Last modified</th><th>Size</th><th>Direct Link</th><th>Globus App</th></tr>
+        <tr><th colspan="6"><hr></th></tr>
     '''
 ])
 
@@ -115,6 +116,7 @@ folder_row = '''
             <td class="icon folder"></td>
             <td>{name} ({directory})</td>
             <td align="right">{tstamp} </td>
+            <td>-</td>
             <td>-</td>
             <td>-</td>
         </tr>
@@ -127,6 +129,7 @@ file_row = '''
             <td align="right">{tstamp} </td>
             <td align="right">{size}</td>
             <td align="right"><{link}</td>
+            <td align="right">{app_link}</td>
         </tr>
 '''
 
@@ -135,6 +138,7 @@ folder_row_recur = '''
             <td class="icon folder"></td>
             <td><a href="{name}/index.html">{name}</a> </td>
             <td align="right">{tstamp} </td>
+            <td>-</td>
             <td>-</td>
             <td>-</td>
         </tr>
@@ -147,11 +151,12 @@ file_row_recur = '''
             <td align="right">{tstamp} </td>
             <td align="right">{size}</td>
             <td align="right">{link}</td>
+            <td align="right">{app_link}</td>
         </tr>
 '''
 
 html_footer = '''
-        <tr><th colspan="5"><hr></th></tr>
+        <tr><th colspan="6"><hr></th></tr>
     </table>
     Globus HTTPS Server at ALCF/ANL Petrel; index generated on {}
     </body>
@@ -166,7 +171,9 @@ markdown_title = ''.join([
 
 markdown_section = '''
 ## {name}
-### {link}
+**Links**
+* Direct: {link}
+* Globus App: {app_link}
 **Type**: {item_type}
 **Location**: {directory}
 **Last Modified**: {tstamp}
@@ -176,6 +183,9 @@ markdown_section = '''
 markdown_footer = '''
 #### Globus HTTPS Server at ALCF/ANL Petrel; index generated on {}
 '''
+
+# Link for the Globus App
+globus_link = 'https://app.globus.org/file-manager?origin_id={uuid}&origin_path={dir}'
 
 get_input = getattr(__builtins__, 'raw_input', input)
 
@@ -251,14 +261,14 @@ def get_human_readable_size(size):
     return '{}{}'.format(int(size), suffix)
 
 
-def create_index(catalog, directory, filtered_names):
+def create_index(catalog, directory, filtered_names, endpoint):
     """
     Creates non-recursive (single) index.html index file.
     """
     html = html_header.format(directory=directory)
     for item in catalog:
         file_data = item['file']
-        html = update_html(html, item, file_data, filtered_names)
+        html = update_html(html, item, file_data, filtered_names, endpoint)
         name = file_data['name']
         directory = item['dir']
         if file_data['type'] == 'dir':
@@ -267,17 +277,25 @@ def create_index(catalog, directory, filtered_names):
                                           directory=directory,
                                           tstamp=file_data['last_modified'])
         if file_data['type'] == 'file':
-            if filter_item(name, directory) and len(args.include_filter) > 0:
-                if not filter_item(name, directory, 1):
+            if filter_item(name) and len(args.include_filter) > 0:
+                if not filter_item(name, 1):
+                    app_link=globus_link.format(uuid=endpoint, 
+                                                dir=urllib.quote(directory, safe=''))
                     html += file_row.format(name=name,
                                             directory=directory,
                                             tstamp=file_data['last_modified'],
-                                            size=get_human_readable_size(file_data['size']))
-            elif not filter_item(name, directory, 1):
+                                            size=get_human_readable_size(file_data['size']),
+                                            app_link=app_link,
+                                            link='-')
+            elif not filter_item(name, 1):
+                app_link=globus_link.format(uuid=endpoint, 
+                                            dir=urllib.quote(directory, safe=''))
                 html += file_row.format(name=name,
                                         directory=directory,
                                         tstamp=file_data['last_modified'],
-                                        size=get_human_readable_size(file_data['size']))
+                                        size=get_human_readable_size(file_data['size']),
+                                        app_link=app_link,
+                                        link='-')
 
     html += html_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
 
@@ -286,7 +304,7 @@ def create_index(catalog, directory, filtered_names):
             index_file.write(html)
 
 
-def update_html(html, item, data, filtered_names):
+def update_html(html, item, data, filtered_names, endpoint):
     name = data['name']
     directory = item['dir']
     if data['type'] == 'dir':
@@ -296,21 +314,29 @@ def update_html(html, item, data, filtered_names):
                                       tstamp=data['last_modified'])
     if data['type'] == 'file':
         if filter_item(name, directory):
-            if not filter_item(name, directory, 1):
+            if not filter_item(name, 1):
+                app_link=globus_link.format(uuid=endpoint, 
+                                            dir=urllib.quote(directory, safe=''))
                 html += file_row.format(name=name,
                                         directory=directory,
                                         tstamp=data['last_modified'],
-                                        size=get_human_readable_size(data['size']))
-            elif not filter_item(name, directory, 1):
+                                        size=get_human_readable_size(data['size']),
+                                        app_link=app_link,
+                                        link='-')
+            elif not filter_item(name, 1):
+                app_link=globus_link.format(uuid=endpoint, 
+                                            dir=urllib.quote(directory, safe=''))
                 html += file_row.format(name=name,
                                         directory=directory,
                                         tstamp=data['last_modified'],
-                                        size=get_human_readable_size(data['size']))
+                                        size=get_human_readable_size(data['size']),
+                                        app_link=app_link,
+                                        link='-')
 
     return html
 
 
-def create_recur_index(directory, data, catalog):
+def create_recur_index(directory, data, catalog, endpoint):
 
     # separate original data and filtered data
     files = data['orig_data']
@@ -335,9 +361,13 @@ def create_recur_index(directory, data, catalog):
                                           tstamp=item['last_modified'])
         if item['type'] == 'file':
             if name in filtered_names:
+                app_link=globus_link.format(uuid=endpoint, 
+                                            dir=urllib.quote(directory, safe=''))
                 html += file_row_recur.format(name=item['name'],
                                               tstamp=item['last_modified'],
-                                            size=get_human_readable_size(item['size']))
+                                              size=get_human_readable_size(item['size']),
+                                              app_link=app_link,
+                                              link='-')
             
         if name not in args.exclude_filter:
             if len(args.include_filter) > 0 and name in filtered_names:
@@ -390,11 +420,11 @@ def walk(tc, shared_endpoint, directory, catalog):
                 print(path)
                 result = walk(tc, shared_endpoint, path, catalog)
         elif item['type'] == 'file':
-            if filter_item(name, directory) and len(args.include_filter) > 0:
-                if not filter_item(name, directory, 1):
+            if filter_item(name) and len(args.include_filter) > 0:
+                if not filter_item(name, 1):
                     filtered_names.append(name)
                     filtered_data.append({'dir': directory, 'file': item})
-            elif not filter_item(name, directory, 1):
+            elif not filter_item(name, 1):
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
             elif not len(args.exclude_filter) > 0:
@@ -414,14 +444,14 @@ def walk(tc, shared_endpoint, directory, catalog):
     if not args.recursive:
         for data in filtered_data:
             catalog.append(data)
-        create_index(catalog, directory, filtered_names)
+        create_index(catalog, directory, filtered_names, shared_endpoint)
     else:
-        create_recur_index(directory, data, catalog)
+        create_recur_index(directory, data, catalog, shared_endpoint)
 
 
     return {'names': filtered_names, 'items': filtered_data}
     
-def filter_item(item_name, directory, filter_type=0):
+def filter_item(item_name, filter_type=0):
     """
     Check if the given item (a file or directory) should be included/excluded.
     Decision is based on the respective filter (include/exclude), which is specified
@@ -462,7 +492,7 @@ def upload(tc, local_endpoint, shared_endpoint):
                                         args.dest_endpoint,
                                         label='Upload index html and markdown files')
         cwd = os.getcwd()
-        for root, dirs, files in os.walk(args.local_index_dir):
+        for root, files in os.walk(args.local_index_dir):
             if 'index.html' in files:
                 local_path = os.path.join(cwd, root, 'index.html')
                 dest_path = os.path.join(root.replace(args.local_index_dir, '/'), 'index.html')
@@ -593,9 +623,7 @@ def generate_index():
                 os.environ["TIKA_SERVER_ENDPOINT"] = local_ept
                 tika.initVM()
                 local_path = os.path.join(os.getcwd(), args.local_index_dir)
-                parsed_data = parse_files(tc,
-                                          local_ept,
-                                          local_path)
+                parsed_data = parse_files(local_path)
                 print('Generating "parsed_results.json" file in: {}'.format(os.getcwd()))
                 f = open('parsed_results.json', 'w')
                 json.dump(parsed_data, f)
@@ -613,13 +641,6 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
     the local/current endpoint and directory. Supports the include/exclude
     filters.
     """
-    while True:
-        try:
-            r = tc.operation_ls(shared_ept, path=directory)
-            break
-        except (TransferAPIError, GlobusTimeoutError) as e:
-            eprint(e)
-
     filtered_names = filtered['names']
     filtered_data = filtered['items']
 
@@ -645,7 +666,7 @@ def download_data(tc, tdata, shared_ept, directory, filtered):
                                 print('Failed to create directory at path: {}'.format(local_path))
         
 
-def parse_files(tc, endpoint, directory):
+def parse_files(directory):
     """
     Goes through the given directory (recursively) and runs the Tika  
     parser on all of the files except for 'index.' files. Also ignores 
