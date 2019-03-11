@@ -45,7 +45,7 @@ def generate_file():
         for name in files:
             print(name)
             
-            file_path = join_path_names('docs/examples/', args.directory, name)
+            file_path = join_path_names('automation-examples/docs/examples/', args.directory, name)
             html += html_section.format(file_path=file_path)
 
     html += html_footer
