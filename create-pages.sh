@@ -124,10 +124,14 @@ if [ ! -z "$args" ]
 fi
 
 # copy all index.* files from tmp (or local_index_dir) to docs/examples/indexgen
-cp tmp/index.* docs/examples/indexgen
+#cp tmp/index.* docs/examples/indexgen
+cp tmp/index.* docs
 
 # update the indexgen.html file in docs/examples/ for listing the index files generated (in gen_index.py script)
-python docs/examples/gen_markdown.py   
+#python docs/examples/gen_markdown.py   
+#python docs/examples/gen_gh_page.py
+# make sure that git is in the master branch (or else GitHub Pages will not update)
+git checkout master
 
 # git add, commit, and push for the index files (in docs/examples/indexgen)
 git add docs/*
