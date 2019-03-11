@@ -34,12 +34,19 @@ def generate_file():
     for root, dirs, files in os.walk(path):
         for name in files:
             print(name)
-            file_path = os.path.normpath(os.path.join(path, name))
+            file_path = join_path_names(path, name)[1:]
             md += markdown_section.format(name=name, path=file_path)
 
     file_path = os.path.join('docs/', args.file_name)
     with open(file_path, 'w') as index_file:
         index_file.write(md)
+
+def join_path_names(path_one, path_two, *argv):
+    full_path = os.path.normpath(path_one + '/' + path_two)
+    for arg in argv:
+        full_path = os.path.normpath(full_path + '/' + arg)
+        
+    return full_path
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
