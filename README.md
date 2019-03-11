@@ -50,6 +50,8 @@ The Python examples are built using the
 * `source venv/bin/activate`
 * `pip install -r requirements.txt`
 
+**Note**: It is possible when running `pip install -r requirements.txt` to get an error message saying `Cannot uninstall 'six'....`. To solve this issue run `sudo pip install -r requirements.txt --ignore-installed six` instead.
+
 ### Linux (Ubuntu)
 
 ##### Environment Setup
