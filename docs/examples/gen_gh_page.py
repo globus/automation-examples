@@ -48,6 +48,8 @@ def generate_file():
             file_path = join_path_names('docs/examples/', args.directory, name)
             html += html_section.format(file_path=file_path)
 
+    html += html_footer
+
     file_path = os.path.join('docs/', args.file_name)
     with open(file_path, 'w') as index_file:
         index_file.write(html)
