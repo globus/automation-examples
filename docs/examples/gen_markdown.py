@@ -19,8 +19,7 @@ md_header = ''.join([
 ])
 
 markdown_section = '''
-<dt>{name}</dt>
-<dd>{path}</dd>
+[{name}]({path})
 '''
 
 markdown_footer = '''

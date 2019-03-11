@@ -2,13 +2,10 @@
 # Index of indexgen
 <dl>
 
-<dt>index.html</dt>
-<dd>/Users/G/automation-examples/docs/examples/indexgen/index.html</dd>
+[index.html](/Users/G/automation-examples/docs/examples/indexgen/index.html)
 
-<dt>index.md</dt>
-<dd>/Users/G/automation-examples/docs/examples/indexgen/index.md</dd>
+[index.md](/Users/G/automation-examples/docs/examples/indexgen/index.md)
 
-<dt>index.json</dt>
-<dd>/Users/G/automation-examples/docs/examples/indexgen/index.json</dd>
+[index.json](/Users/G/automation-examples/docs/examples/indexgen/index.json)
 
 </dl>
