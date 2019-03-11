@@ -14,16 +14,11 @@ import shutil
 md_header = ''.join([
 '''
 # Index of {directory}
-<dl>
 '''
 ])
 
 markdown_section = '''
 [{name}]({path})
-'''
-
-markdown_footer = '''
-</dl>
 '''
 
 get_input = getattr(__builtins__, 'raw_input', input)
@@ -42,7 +37,6 @@ def generate_file():
             file_path = os.path.normpath(os.path.join(path, name))
             md += markdown_section.format(name=name, path=file_path)
 
-    md += markdown_footer
     file_path = os.path.join('docs/', args.file_name)
     with open(file_path, 'w') as index_file:
         index_file.write(md)
