@@ -171,9 +171,8 @@ markdown_title = ''.join([
 
 markdown_section = '''
 ## {name}
-**Links**
-* Direct: {link}
-* Globus App: {app_link}
+*Direct Link**: {link}
+**Globus App**: {app_link}
 **Type**: {item_type}
 **Location**: {directory}
 **Last Modified**: {tstamp}
