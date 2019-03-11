@@ -590,11 +590,13 @@ def generate_index():
             markdown = markdown_title.format(directory=path)
             for item in catalog:
                 file_item = item['file']
+                file_name=file_item['name']
+                file_dir = item['dir']
                 app_link = globus_link.format(uuid=shared_ept,
-                                              dir=urllib.quote(args.directory, safe=''))
-                markdown += markdown_section.format(name=file_item['name'],
+                                              dir=urllib.quote(file_dir, safe=''))
+                markdown += markdown_section.format(name=file_name,
                                                     item_type=file_item['type'],
-                                                    directory=item['dir'],
+                                                    directory=file_dir,
                                                     tstamp=file_item['last_modified'],
                                                     size=get_human_readable_size(file_item['size']),
                                                     app_link=app_link,
