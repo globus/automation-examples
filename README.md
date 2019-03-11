@@ -77,9 +77,9 @@ The Python examples are built using the
 * `venv\Scripts\activate`
 * `pip install -r requirements.txt`
 
-### Running the scripts
+## Running the scripts
 
-##### globus_folder_sync.py and cli-sync.sh
+### globus_folder_sync.py and cli-sync.sh
 
 The app transfers the `/share/godata/` directory from Tutorial Endpoint 1 to
 `/~/sync-demo/` on Tutorial Endpoint 2. The destination path must exist
@@ -123,7 +123,7 @@ Saving sync transfer ID to last-transfer-id.txt
 $ cat last-transfer-id.txt
 842ac3d8-39b5-11e7-bcec-22000b9a448b
 ```
-##### share_data.py and share-data.sh
+### share_data.py and share-data.sh
 
 The app transfers a directory to a shared endpoint and destination path
 specified in the command line. The destination path must exist prior to running the script. Before the script starts transferring files it checks if the
@@ -179,7 +179,7 @@ The directory was created successfully
 Message: The transfer has been accepted and a task has been created and queued for execution
 Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 ```
-##### cleanup_cache.py
+### cleanup_cache.py
 
 There are a few things that are necessary to set up in order to successfully run [`cleanup_cache.py`](cleanup_cache.py).
 
@@ -204,3 +204,40 @@ The `cleanup_cache.py` script will do the following:
 Note: `cleanup_cache.py` will find the most specific common directory for all files copied in a transfer.  Thus, if all the files transferred were in `/maindir/subdir`, it will attempt to recursively delete `/maindir/subdir`, not `/maindir`.
 
 Another Note: This script is greedy in how it deletes folders. If someone cherry-picks files, it will still delete the whole directory!
+
+## Blocking on Transfer Tasks
+
+Sometimes you'll want to block on the submitted transfer before
+proceeding onto the next part of your script or workflow. You can do
+this with the `globus task wait` command from the
+[Globus CLI](https://docs.globus.org/cli/). This command also allows
+you to specify the return code from a timeout window to determine if
+the CLI is exiting because the task has failed or is still progressing.
+
+### Examples
+
+Default value for exceeding the timeout window
+```
+$ globus task wait -H --timeout 35 --polling-interval 10 c1002af0-444e-11e9-bf28-0edbf3a4e7ee
+....
+Task has yet to complete after 35 seconds
+$ echo $?
+1
+```
+
+Setting a custom exit code of `0`
+```
+$ globus task wait -H --timeout 35 --polling-interval 10 --timeout-exit-code 0 c1002af0-444e-11e9-bf28-0edbf3a4e7ee
+....
+Task has yet to complete after 35 seconds
+$ echo $?
+0
+```
+
+Cancelled task
+```
+$ globus task wait -H --timeout 60 --polling-interval 5 c1002af0-444e-11e9-bf28-0edbf3a4e7ee
+..
+$ echo $?
+1
+```
