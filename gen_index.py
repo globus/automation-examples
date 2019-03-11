@@ -399,15 +399,15 @@ def walk(tc, shared_endpoint, directory, catalog):
         if item['type'] == 'dir' and not name.startswith('.'):
             # check against include filter
             if len(args.include_filter) > 0:
-                if filter_item(name, directory): 
+                if filter_item(name): 
                     # check against exclude filter
-                    if not filter_item(name, directory, 1):
+                    if not filter_item(name, 1):
                         filtered_names.append(name)
                         filtered_data.append({'dir': directory, 'file': item})
                         path = os.path.join(directory, name)
                         print(path)
                         result = walk(tc, shared_endpoint, path, catalog)
-            elif not filter_item(name, directory, 1):
+            elif not filter_item(name, 1):
                 filtered_names.append(name)
                 filtered_data.append({'dir': directory, 'file': item})
                 path = os.path.join(directory, name)
@@ -590,11 +590,15 @@ def generate_index():
             markdown = markdown_title.format(directory=path)
             for item in catalog:
                 file_item = item['file']
+                app_link = globus_link.format(uuid=shared_ept,
+                                              dir=urllib.quote(args.directory, safe=''))
                 markdown += markdown_section.format(name=file_item['name'],
                                                     item_type=file_item['type'],
                                                     directory=item['dir'],
                                                     tstamp=file_item['last_modified'],
-                                                    size=get_human_readable_size(file_item['size']))
+                                                    size=get_human_readable_size(file_item['size']),
+                                                    app_link=app_link,
+                                                    link='-')
             markdown += markdown_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
             markdown_file.write(markdown)
 
