@@ -34,7 +34,7 @@ def generate_file():
     for root, dirs, files in os.walk(path):
         for name in files:
             print(name)
-            file_path = join_path_names(path, name)[1:]
+            file_path = join_path_names('examples/', args.directory, name)
             md += markdown_section.format(name=name, path=file_path)
 
     file_path = os.path.join('docs/', args.file_name)
