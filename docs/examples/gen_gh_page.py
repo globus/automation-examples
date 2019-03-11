@@ -69,7 +69,7 @@ if __name__ == '__main__':
         help='The directory that the files/folders are located in. By'
         ' default, it is set to the "indexgen" directory.')
     parser.add_argument(
-        '--file-name', default='index.md',
+        '--file-name', default='index.html',
         help='The name of the HTML file to be generated/updated. Should'
         ' contain the ".html" extension; default value is "indexgen.html".')
     args = parser.parse_args()
