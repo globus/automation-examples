@@ -23,7 +23,7 @@ html_header = ''.join([
 ])
 
 html_section = '''
-<object data="{file_path}" type="text/HTML" scrolling="no" frameborder="0" marginheight="0px" marginwidth="0px" height="100%" width="100%"></object>
+<meta http-equiv="refresh" content="0" url="https://repo.github.io/{file_path}" />
 '''
 
 html_footer = '''
@@ -45,7 +45,7 @@ def generate_file():
         for name in files:
             print(name)
             
-            file_path = join_path_names('examples/', args.directory, name)
+            file_path = join_path_names('docs/examples/', args.directory, name)
             html += html_section.format(file_path=file_path)
 
     file_path = os.path.join('docs/', args.file_name)
