@@ -376,7 +376,7 @@
 * Globus App: https://app.globus.org/file-manager?origin_id=152ea4ac-28c6-11e9-9836-0262a1f2f698&origin_path=%2F
 **Type**: file
 **Location**: /
-**Last Modified**: 2019-03-11 20:28:45+00:00
-**Size**: 4.9K
+**Last Modified**: 2019-03-11 20:29:56+00:00
+**Size**: 10K
 
-#### Globus HTTPS Server at ALCF/ANL Petrel; index generated on 2019-03-11T20:29
+#### Globus HTTPS Server at ALCF/ANL Petrel; index generated on 2019-03-11T20:31
