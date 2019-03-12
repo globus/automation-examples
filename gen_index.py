@@ -171,7 +171,7 @@ markdown_title = ''.join([
 
 markdown_section = '''
 **{name}**
-- [Direct Link]({link})
+- Direct Link: {link}
 - [Globus App]({app_link})
 - Type
     - {item_type}
@@ -288,7 +288,8 @@ def create_index(catalog, directory, filtered_names, endpoint):
                                             directory=directory,
                                             tstamp=file_data['last_modified'],
                                             size=get_human_readable_size(file_data['size']),
-                                            app_link=app_link)
+                                            app_link=app_link,
+                                            link='')
             elif not filter_item(name, 1):
                 app_link=globus_link.format(uuid=endpoint, 
                                             dir=urllib.quote(directory, safe=''))
@@ -296,7 +297,8 @@ def create_index(catalog, directory, filtered_names, endpoint):
                                         directory=directory,
                                         tstamp=file_data['last_modified'],
                                         size=get_human_readable_size(file_data['size']),
-                                        app_link=app_link)
+                                        app_link=app_link,
+                                        link='')
 
     html += html_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
 
@@ -322,7 +324,8 @@ def update_html(html, item, data, filtered_names, endpoint):
                                         directory=directory,
                                         tstamp=data['last_modified'],
                                         size=get_human_readable_size(data['size']),
-                                        app_link=app_link)
+                                        app_link=app_link,
+                                        link='')
             elif not filter_item(name, 1):
                 app_link=globus_link.format(uuid=endpoint, 
                                             dir=urllib.quote(directory, safe=''))
@@ -330,7 +333,8 @@ def update_html(html, item, data, filtered_names, endpoint):
                                         directory=directory,
                                         tstamp=data['last_modified'],
                                         size=get_human_readable_size(data['size']),
-                                        app_link=app_link)
+                                        app_link=app_link,
+                                        link='')
 
     return html
 
@@ -365,7 +369,8 @@ def create_recur_index(directory, data, catalog, endpoint):
                 html += file_row_recur.format(name=item['name'],
                                               tstamp=item['last_modified'],
                                               size=get_human_readable_size(item['size']),
-                                              app_link=app_link)
+                                              app_link=app_link,
+                                              link='')
             
         if name not in args.exclude_filter:
             if len(args.include_filter) > 0 and name in filtered_names:
@@ -597,7 +602,8 @@ def generate_index():
                                                     directory=file_dir,
                                                     tstamp=file_item['last_modified'],
                                                     size=get_human_readable_size(file_item['size']),
-                                                    app_link=app_link)
+                                                    app_link=app_link,
+                                                    link='')
             markdown += markdown_footer.format(datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M'))
             markdown_file.write(markdown)
 
