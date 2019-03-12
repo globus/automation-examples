@@ -170,13 +170,19 @@ markdown_title = ''.join([
 ])
 
 markdown_section = '''
-## {name}
-*Direct Link**: {link}
-**Globus App**: {app_link}
-**Type**: {item_type}
-**Location**: {directory}
-**Last Modified**: {tstamp}
-**Size**: {size}
+**{name}**
+- Direct Link
+    - {link}
+- Globus App
+    - {app_link}
+- Type
+    - {item_type}
+- Location 
+    - {directory}
+- Last Modified
+    - {tstamp}
+- Size
+    - {size}
 '''
 
 markdown_footer = '''
