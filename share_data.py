@@ -40,10 +40,10 @@ from __future__ import print_function
 import os
 import sys
 import argparse
-import webbrowser
 import json
 import globus_sdk
 from globus_sdk.exc import TransferAPIError
+from fair_research_login import NativeClient
 
 # Both Native App and Client Credential authentication require Client IDs.
 # Create your app at developers.globus.org. The following id is for testing
@@ -89,6 +89,8 @@ SCOPES = ('openid email profile '
 
 TOKEN_FILE = 'refresh-tokens.json'
 
+APP_NAME = 'Share Data Example App'
+
 # Example: Globus Tutorial Endpoint 1
 source_endpoint = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
 
@@ -113,6 +115,8 @@ get_input = getattr(__builtins__, 'raw_input', input)
 
 def load_tokens_from_file(filepath):
     """Load a set of saved tokens."""
+    if not os.path.exists(filepath):
+        return []
     with open(filepath, 'r') as f:
         tokens = json.load(f)
 
@@ -125,77 +129,25 @@ def save_tokens_to_file(filepath, tokens):
         json.dump(tokens, f)
 
 
-def update_tokens_file_on_refresh(token_response):
-    """
-    Callback function passed into the RefreshTokenAuthorizer.
-    Will be invoked any time a new access token is fetched.
-    """
-    save_tokens_to_file(TOKEN_FILE, token_response.by_resource_server)
-
-
-def is_remote_session():
-    """
-    Check if this is a remote session, in which case we can't open a browser
-    on the users computer. This is required for Native App Authentication (but
-    not a Client Credentials Grant).
-    Returns True on remote session, False otherwise.
-    """
-    return os.environ.get('SSH_TTY', os.environ.get('SSH_CONNECTION'))
-
-
 def eprint(*args, **kwargs):
     """Same as print, but to standard error"""
     print(*args, file=sys.stderr, **kwargs)
 
 
-def do_native_app_authentication(client_id, redirect_uri,
-                                 requested_scopes=None):
-    """
-    Does a Native App authentication flow and returns a
-    dict of tokens keyed by service name.
-    """
-    client = globus_sdk.NativeAppAuthClient(client_id=client_id)
-    # pass refresh_tokens=True to request refresh tokens
-    client.oauth2_start_flow(
-            requested_scopes=requested_scopes,
-            redirect_uri=redirect_uri,
-            refresh_tokens=True)
-
-    url = client.oauth2_get_authorize_url()
-
-    print('Native App Authorization URL: \n{}'.format(url))
-
-    if not is_remote_session():
-        # There was a bug in webbrowser recently that this fixes:
-        # https://bugs.python.org/issue30392
-        if sys.platform == 'darwin':
-            webbrowser.get('safari').open(url, new=1)
-        else:
-            webbrowser.open(url, new=1)
-
-    auth_code = get_input('Enter the auth code: ').strip()
-
-    token_response = client.oauth2_exchange_code_for_tokens(auth_code)
-
-    # return a set of tokens, organized by resource server name
-    return token_response.by_resource_server
-
-
 def get_native_app_authorizer(client_id):
     tokens = None
+    client = NativeClient(client_id=client_id, app_name=APP_NAME)
     try:
         # if we already have tokens, load and use them
-        tokens = load_tokens_from_file(TOKEN_FILE)
+        tokens = client.load_tokens(requested_scopes=SCOPES)    
     except:
         pass
 
     if not tokens:
-        tokens = do_native_app_authentication(
-                client_id=client_id,
-                redirect_uri=REDIRECT_URI,
-                requested_scopes=SCOPES)
+        tokens = client.login(requested_scopes=SCOPES,
+                              refresh_tokens=True)
         try:
-            save_tokens_to_file(TOKEN_FILE, tokens)
+            client.save_tokens(tokens)
         except:
             pass
 
@@ -207,8 +159,7 @@ def get_native_app_authorizer(client_id):
             transfer_tokens['refresh_token'],
             auth_client,
             access_token=transfer_tokens['access_token'],
-            expires_at=transfer_tokens['expires_at_seconds'],
-            on_refresh=update_tokens_file_on_refresh)
+            expires_at=transfer_tokens['expires_at_seconds'])
 
 
 def do_client_credentials_app_authentication(client_id, client_secret):
@@ -262,9 +213,8 @@ def share_data(args):
                    )
             sys.exit(1)
         # get an authorizer if it is a Confidential App
-        authorizer = get_confidential_app_authorizer(
-            client_id=CLIENT_ID,
-            client_secret=secret
+        authorizer = get_confidential_app_authorizer(client_id=CLIENT_ID,
+                                                     client_secret=secret
         )
     else:
         raise ValueError('Invalid Authenticator, this script only understands '
@@ -329,8 +279,8 @@ def share_data(args):
               .format(destination_directory))
         tc.operation_mkdir(user_shared_endpoint, destination_directory)
     except TransferAPIError as e:
-            eprint(e)
-            sys.exit(1)
+        eprint(e)
+        sys.exit(1)
 
     # grant group/user read access to the destination directory
     if args.user_uuid:
@@ -388,11 +338,10 @@ def share_data(args):
                 sys.exit(1)
 
     # transfer data - source directory recursively
-    tdata = globus_sdk.TransferData(
-            tc,
-            user_source_endpoint,
-            user_shared_endpoint,
-            label='Share Data Example')
+    tdata = globus_sdk.TransferData(tc,
+                                    user_source_endpoint,
+                                    user_shared_endpoint,
+                                    label='Share Data Example')
     tdata.add_item(user_source_path, destination_directory, recursive=True)
     try:
         print('Submitting a transfer task')

@@ -15,13 +15,14 @@ the second run won't queue a duplicate transfer."""
 
 import json
 import sys
-import webbrowser
 import os
 import six
 
 from globus_sdk import (NativeAppAuthClient, TransferClient,
                         RefreshTokenAuthorizer, TransferData)
 from globus_sdk.exc import GlobusAPIError, TransferAPIError
+
+from fair_research_login import NativeClient
 
 # Globus Tutorial Endpoint 1
 SOURCE_ENDPOINT = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
@@ -48,6 +49,8 @@ REDIRECT_URI = 'https://auth.globus.org/v2/web/auth-code'
 SCOPES = ('openid email profile '
           'urn:globus:auth:scope:transfer.api.globus.org:all')
 
+APP_NAME = 'Folder Sync Example App'
+
 # ONLY run new tasks if there was a previous task and it exited with one of the
 # following statuses. This is ignored if there was no previous task.
 # The previous task is queried from the DATA_FILE
@@ -60,40 +63,10 @@ CREATE_DESTINATION_FOLDER = True
 get_input = getattr(__builtins__, 'raw_input', input)
 
 
-def do_native_app_authentication(client_id, redirect_uri,
-                                 requested_scopes=None):
-    """
-    Does a Native App authentication flow and returns a
-    dict of tokens keyed by service name.
-    """
-    client = NativeAppAuthClient(client_id=client_id)
-    # pass refresh_tokens=True to request refresh tokens
-    client.oauth2_start_flow(requested_scopes=requested_scopes,
-                             redirect_uri=redirect_uri,
-                             refresh_tokens=True)
-
-    url = client.oauth2_get_authorize_url()
-
-    print('Native App Authorization URL:\n{}'.format(url))
-
-    if not is_remote_session():
-        # There was a bug in webbrowser recently that this fixes:
-        # https://bugs.python.org/issue30392
-        if sys.platform == 'darwin':
-            webbrowser.get('safari').open(url, new=1)
-        else:
-            webbrowser.open(url, new=1)
-
-    auth_code = get_input('Enter the auth code: ').strip()
-
-    token_response = client.oauth2_exchange_code_for_tokens(auth_code)
-
-    # return a set of tokens, organized by resource server name
-    return token_response.by_resource_server
-
-
 def load_data_from_file(filepath):
     """Load a set of saved tokens."""
+    if not os.path.exists(filepath):
+        return []
     with open(filepath, 'r') as f:
         tokens = json.load(f)
 
@@ -106,41 +79,10 @@ def save_data_to_file(filepath, key, data):
         store = load_data_from_file(filepath)
     except:
         store = {}
-    store[key] = data
+    if len(store) > 0:
+        store[key] = data
     with open(filepath, 'w') as f:
         json.dump(store, f)
-
-
-def update_tokens_file_on_refresh(token_response):
-    """
-    Callback function passed into the RefreshTokenAuthorizer.
-    Will be invoked any time a new access token is fetched.
-    """
-    save_data_to_file(DATA_FILE, 'tokens', token_response.by_resource_server)
-
-
-def get_tokens():
-    tokens = None
-    try:
-        # if we already have tokens, load and use them
-        tokens = load_data_from_file(DATA_FILE)['tokens']
-    except:
-        pass
-
-    if not tokens:
-        # if we need to get tokens, start the Native App authentication process
-        tokens = do_native_app_authentication(CLIENT_ID, REDIRECT_URI, SCOPES)
-
-        try:
-            save_data_to_file(DATA_FILE, 'tokens', tokens)
-        except:
-            pass
-
-    return tokens
-
-
-def is_remote_session():
-    return os.environ.get('SSH_TTY', os.environ.get('SSH_CONNECTION'))
 
 
 def setup_transfer_client(transfer_tokens):
@@ -149,8 +91,7 @@ def setup_transfer_client(transfer_tokens):
         transfer_tokens['refresh_token'],
         NativeAppAuthClient(client_id=CLIENT_ID),
         access_token=transfer_tokens['access_token'],
-        expires_at=transfer_tokens['expires_at_seconds'],
-        on_refresh=update_tokens_file_on_refresh)
+        expires_at=transfer_tokens['expires_at_seconds'])
 
     transfer_client = TransferClient(authorizer=authorizer)
 
@@ -193,18 +134,36 @@ def create_destination_directory(transfer_client, dest_ep, dest_path):
 
 
 def main():
+    tokens = None
+    client = NativeClient(client_id=CLIENT_ID, app_name=APP_NAME)
+    try:
+        # if we already have tokens, load and use them
+        tokens = client.load_tokens(requested_scopes=SCOPES)
+    except:
+        pass
 
-    tokens = get_tokens()
+    if not tokens:
+        # if we need to get tokens, start the Native App authentication process
+        # need to specify that we want refresh tokens
+        tokens = client.login(requested_scopes=SCOPES,
+                              refresh_tokens=True)
+        try:
+            client.save_tokens(tokens)
+        except:
+            pass
+
     transfer = setup_transfer_client(tokens['transfer.api.globus.org'])
 
     try:
-        task_data = load_data_from_file(DATA_FILE)['task']
-        task = transfer.get_task(task_data['task_id'])
-        if task['status'] not in PREVIOUS_TASK_RUN_CASES:
-            print('The last transfer status is {}, skipping run...'.format(
-                task['status']
-            ))
-            sys.exit(1)
+        data = load_data_from_file(DATA_FILE)
+        if len(data) > 0:
+            task_data = data['task']
+            task = transfer.get_task(task_data['task_id'])
+            if task['status'] not in PREVIOUS_TASK_RUN_CASES:
+                print('The last transfer status is {}, skipping run...'.format(
+                    task['status']
+                ))
+                sys.exit(1)
     except KeyError:
         # Ignore if there is no previous task
         pass

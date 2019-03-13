@@ -93,16 +93,12 @@ flow every time the script is executed.
 
 ```
 $ ./globus_folder_sync.py 
-Native App Authorization URL: 
-https://auth.globus.org/v2/oauth2/authorize?code_challenge=6xeOSl_5knYrzGPYZZRSme-rbA&state=_default&redirect_uri=https%3A%2F%2Fauth.globus.org%2Fv2%2Fweb%2Fauth-code&response_type=code&client_id=079bdf4e-9666-4816-ac01-7eab9dc82b93&scope=openid+email+profile+urn%3Aglobus%3Aauth%3Ascope%3Atransfer.api.globus.org%3Aall&code_challenge_method=S256&access_type=offline
-Enter the auth code:
-Created directory: /~/sync-demo
 Transfer has been started from
   ddb59aef-6d04-11e5-ba46-22000b92c6ec:/share/godata/
 to
-  ddb59af0-6d04-11e5-ba46-22000b92c6ec:/~/sync-demo
+  ddb59af0-6d04-11e5-ba46-22000b92c6ec:/~/sync-demo/
 Visit the link below to see the changes:
-https://globus.org/app/transfer?destination_path=%2F%7E%2Fsync-demo&origin_path=%2Fshare%2Fgodata%2F&destination_id=ddb59af0-6d04-11e5-ba46-22000b92c6ec&origin_id=ddb59aef-6d04-11e5-ba46-22000b92c6ec
+https://globus.org/app/transfer?destination_path=%2F%7E%2Fsync-demo%2F&origin_path=%2Fshare%2Fgodata%2F&destination_id=ddb59af0-6d04-11e5-ba46-22000b92c6ec&origin_id=ddb59aef-6d04-11e5-ba46-22000b92c6ec
 ```
 The same functionality can be implemented using the Globus CLI. In this case,
 the Globus CLI is responsible for the OAuth 2.0 authorization flow and handling
@@ -123,7 +119,11 @@ Saving sync transfer ID to last-transfer-id.txt
 $ cat last-transfer-id.txt
 842ac3d8-39b5-11e7-bcec-22000b9a448b
 ```
+
+**Note**: Both ./globus_folder_sync.py and cli-sync.sh require you to login (see Login section for help).
+
 ### share_data.py and share-data.sh
+
 
 The app transfers a directory to a shared endpoint and destination path
 specified in the command line. The destination path must exist prior to running the script. Before the script starts transferring files it checks if the
@@ -152,14 +152,14 @@ $ ./share_data.py \
     --destination-path /share-data-demo/ \
     --user-uuid $user_uuid \
     --delete
-Native App Authorization URL: 
-https://auth.globus.org/v2/oauth2/authorize?code_challenge=TUhBQXOSJhsSZSz9KVWzxwq7IhJCYXvuRaONlRK5BFc&state=_default&redirect_uri=https%3A%2F%2Fauth.globus.org%2Fv2%2Fweb%2Fauth-code&response_type=code&client_id=079bdf4e-9666-4816-ac01-7eab9dc82b93&scope=openid+email+profile+urn%3Aglobus%3Aauth%3Ascope%3Atransfer.api.globus.org%3Aall&code_challenge_method=S256&access_type=offline
-Enter the auth code: 
+Destination directory, /share-data-demo/godata/, exists and will be deleted
+Submitting a delete task
+	task_id: 3d68afa2-3943-11e9-9fa6-0a06afd4a22e
 Creating destination directory /share-data-demo/godata/
-Granting user, c02d881a-d274-11e5-bdf5-d3a88fb071ca, read access to the destination directory
+Granting user, 78af45b1-d0b4-4311-8475-b3681d37c4d5, read access to the destination directory
 Submitting a transfer task
-	task_id: db404718-44a2-11e7-bd46-22000b9a448b
-You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/db404718-44a2-11e7-bd46-22000b9a448b.    
+	task_id: 4409c314-3943-11e9-9fa6-0a06afd4a22e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/4409c314-3943-11e9-9fa6-0a06afd4a22e.    
 ```
 `share-data.sh` script shows how to implement the same functionality using the Globus CLI.
 ```
@@ -179,6 +179,9 @@ The directory was created successfully
 Message: The transfer has been accepted and a task has been created and queued for execution
 Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 ```
+
+**Note**: Both share_data.py and share-data.sh require you to login (see Login section for help).
+
 ### cleanup_cache.py
 
 There are a few things that are necessary to set up in order to successfully run [`cleanup_cache.py`](cleanup_cache.py).
@@ -204,6 +207,10 @@ The `cleanup_cache.py` script will do the following:
 Note: `cleanup_cache.py` will find the most specific common directory for all files copied in a transfer.  Thus, if all the files transferred were in `/maindir/subdir`, it will attempt to recursively delete `/maindir/subdir`, not `/maindir`.
 
 Another Note: This script is greedy in how it deletes folders. If someone cherry-picks files, it will still delete the whole directory!
+
+### Login
+
+Some of the scripts require you to login to Globus to ensure that you are an authorized user. The scripts use refresh tokens to save you the trouble of needing to login every time a script is run. For example, if you login when running a script and then run either the same script or a different one, you will not need to login a second time. 
 
 ## Blocking on Transfer Tasks
 
