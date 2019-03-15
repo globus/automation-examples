@@ -3,8 +3,8 @@
 # DESCRIPTION
 #
 # 1) Calls the Python gen_index.py script
-# 2) Copies the index files from `tmp` (or other temporary folder) to `docs/examples/indexgen`
-# 3) Does a `git add`, `git commit`, and `git push` on those (index) files
+# 2) Copies the index file(s) from `tmp` (or other temporary folder) to `docs/`
+# 3) Does a `git add`, `git commit`, and `git push` on those (index) file(s)
 
 # Options for generating the index file(s):
 #   directory           The directory in the shared endpoint where the data is located
@@ -123,13 +123,9 @@ if [ ! -z "$args" ]
         ./gen_index.py --local-endpoint $local_endpoint --shared-endpoint $shared_endpoint
 fi
 
-# copy all index.* files from tmp (or local_index_dir) to docs/examples/indexgen
-#cp tmp/index.* docs/examples/indexgen
+# copy all index.* files from tmp (or local_index_dir) to docs/
 cp tmp/index.* docs
 
-# update the indexgen.html file in docs/examples/ for listing the index files generated (in gen_index.py script)
-#python docs/examples/gen_markdown.py   
-#python docs/examples/gen_gh_page.py
 # make sure that git is in the master branch (or else GitHub Pages will not update)
 git checkout master
 
