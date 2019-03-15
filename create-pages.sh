@@ -130,6 +130,6 @@ cp tmp/index.* docs
 git checkout master
 
 # git add, commit, and push for the index files (in docs/examples/indexgen)
-git add docs/*
+git add docs/index.*
 git commit -m "updating index examples (from create-pages.sh)"
 git push
