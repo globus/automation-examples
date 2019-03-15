@@ -3,11 +3,13 @@ Simple code examples for various use cases using Globus.
 
 ## Overview
 
-There are three example use cases in this repo:
+There are five example use cases in this repo:
 
 * Syncing a directory.
 * Staging data in a shared directory.
-* Removing directories after files are transferred .
+* Removing directories after files are transferred.
+* Generating an index file listing all directories and files on a shared endpoint.
+* Generating/Updating a GitHub Pages site.
 
 The syncing and staging examples are implemented as both a Bash
 script that calls the [Globus CLI](https://docs.globus.org/cli/) and 
