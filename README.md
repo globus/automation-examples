@@ -23,6 +23,8 @@ The Python examples are built using the
 * [`share-data.sh`](share-data.sh): stages data to a folder and sets sharing access control to a user and or group.
 * [`share_data.py`](share_data.py): stages data to a folder and sets sharing access control to a user and or group. Uses a [Native App grant](https://github.com/globus/native-app-examples) or [Client Credential grant](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
 * [`cleanup_cache.py`](cleanup_cache.py): removes directories under a shared endpoint that have had data transferred from them. Uses [Client Credential grant](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
+* [`gen_index.py`](gen_index.py): generates an index file containing all directories and files on a shared endpoint.
+* [`create-pages.sh`](create_pages.sh): calls the `gen_index.py` script and generates/updates GitHub Pages site with the generated index.
 
 ## Getting Started
 * Install the [Globus Command Line Interface (CLI)](https://docs.globus.org/cli/installation/).
