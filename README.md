@@ -82,11 +82,11 @@ The Python examples are built using the
 * `venv\Scripts\activate`
 * `pip install -r requirements.txt`
 
-### Running the scripts
+## Running the scripts
 
 **Note**: Some of the examples will require you to login (see Login section for help).
 
-##### globus_folder_sync.py and cli-sync.sh
+### globus_folder_sync.py and cli-sync.sh
 
 The app transfers the `/share/godata/` directory from Tutorial Endpoint 1 to
 `/~/sync-demo/` on Tutorial Endpoint 2. The destination path must exist
@@ -127,7 +127,7 @@ $ cat last-transfer-id.txt
 842ac3d8-39b5-11e7-bcec-22000b9a448b
 ```
 
-##### share_data.py and share-data.sh
+### share_data.py and share-data.sh
 
 The app transfers a directory to a shared endpoint and destination path
 specified in the command line. The destination path must exist prior to running the script. Before the script starts transferring files it checks if the
@@ -186,7 +186,7 @@ Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 
 **Note**: Both share_data.py and share-data.sh require you to login (see Login section for help).
 
-##### gen_index.py
+### gen_index.py
 
 The default behavior of this script is to create a single JSON file that lists all the files, and their attributes, in a given endpoint and path (subdirectories included). The following optional flags can change what kind of output (index) files you get:
 * `--no-json`: this flag stops the script from generating the JSON file
@@ -230,7 +230,7 @@ $ ./gen_index.py \
     --markdown-output
 ```
 
-###### Default Behavior
+#### Default Behavior
 In addition to the previously mentioned options, there are certain actions that the script takes by default that can be changed if certain arguments are provided.
 * **Destination Endpoint and Directory**
     * By default, the script uploads the index files to the provided shared endpoint and it's root (`/`) directory. It is possible to change this behavior by using the `--dest-endpoint` and `--dest-path` arguments to change the upload endpoint and directory respectively. This will only work if BOTH arguments are given; if only one is provided then the script will resort to it's default behavior.
@@ -257,7 +257,7 @@ Example Directory (after the script, assume that FolderA and FolderB are in the 
     * index.html
 * index.html
 
-###### Using Filters
+#### Using Filters
 
 The script also supports `include` and `exclude` filters. Include filters allow you to specify files and directories to include in the list, and stop the script from adding any files or directories not specified in the filters (see the example below).
 
@@ -306,7 +306,7 @@ $ ./gen_index.py \
     --include-filter '*data*'
 ```
 
-###### Parsing Files
+#### Parsing Files
 The script also supports the option to parse the files in order to extract more information. Using the `--simple-parser` flag will enable this option and cause the script to parse the files and write the resulting metadata to a `parsed-data.json` file that will be saved to the provided local endpoint. Part of this process will involve downloading all of the files and folders from the shared endpoint to the local endpoint (and their respective directories), which will be stored in a temporary (`tmp`) folder.
 
 For details on how the Tika Python parser works, see: https://github.com/chrismattmann/tika-python 
@@ -351,7 +351,7 @@ Some things to note from the example above:
     * This path represents the main (local) directory that you are running the script from and may be different for you.
          * [username] is just a placeholder and will differ depending on the individual.
          
-##### create-pages.sh
+### create-pages.sh
 This script calls the gen_index.py script, copies the index files generated from the `tmp` directory to the `docs/examples/indexgen/` directory, and commits and pushes those files to the GitHub repository. The purpose of the script is to automate the process of updating the GitHub Page for the repository.
 
 Things to keep in mind:
@@ -406,7 +406,7 @@ To https://github.com/globus/automation-examples.git
    b1d293a..cd86fbd  master -> master
 ```
 
-##### cleanup_cache.py
+### cleanup_cache.py
 
 There are a few things that are necessary to set up in order to successfully run [`cleanup_cache.py`](cleanup_cache.py).
 
