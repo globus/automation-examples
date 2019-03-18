@@ -83,8 +83,11 @@ The Python examples are built using the
 * `pip install -r requirements.txt`
 
 ## Running the scripts
+<<<<<<< HEAD
 
 **Note**: Some of the examples will require you to login (see Login section for help).
+=======
+>>>>>>> 3dae86fee0e96638dca6a049e1adb916d3765812
 
 ### globus_folder_sync.py and cli-sync.sh
 
@@ -127,7 +130,14 @@ $ cat last-transfer-id.txt
 842ac3d8-39b5-11e7-bcec-22000b9a448b
 ```
 
+<<<<<<< HEAD
 ### share_data.py and share-data.sh
+=======
+**Note**: Both ./globus_folder_sync.py and cli-sync.sh require you to login (see Login section for help).
+
+### share_data.py and share-data.sh
+
+>>>>>>> 3dae86fee0e96638dca6a049e1adb916d3765812
 
 The app transfers a directory to a shared endpoint and destination path
 specified in the command line. The destination path must exist prior to running the script. Before the script starts transferring files it checks if the
@@ -186,6 +196,7 @@ Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 
 **Note**: Both share_data.py and share-data.sh require you to login (see Login section for help).
 
+<<<<<<< HEAD
 ### gen_index.py
 
 The default behavior of this script is to create a single JSON file that lists all the files, and their attributes, in a given endpoint and path (subdirectories included). The following optional flags can change what kind of output (index) files you get:
@@ -406,6 +417,8 @@ To https://github.com/globus/automation-examples.git
    b1d293a..cd86fbd  master -> master
 ```
 
+=======
+>>>>>>> 3dae86fee0e96638dca6a049e1adb916d3765812
 ### cleanup_cache.py
 
 There are a few things that are necessary to set up in order to successfully run [`cleanup_cache.py`](cleanup_cache.py).
@@ -435,3 +448,40 @@ Another Note: This script is greedy in how it deletes folders. If someone cherry
 ### Login
 
 Some of the scripts require you to login to Globus to ensure that you are an authorized user. The scripts use refresh tokens to save you the trouble of needing to login every time a script is run. For example, if you login when running a script and then run either the same script or a different one, you will not need to login a second time. 
+
+## Blocking on Transfer Tasks
+
+Sometimes you'll want to block on the submitted transfer before
+proceeding onto the next part of your script or workflow. You can do
+this with the `globus task wait` command from the
+[Globus CLI](https://docs.globus.org/cli/). This command also allows
+you to specify the return code from a timeout window to determine if
+the CLI is exiting because the task has failed or is still progressing.
+
+### Examples
+
+Default value for exceeding the timeout window
+```
+$ globus task wait -H --timeout 35 --polling-interval 10 c1002af0-444e-11e9-bf28-0edbf3a4e7ee
+....
+Task has yet to complete after 35 seconds
+$ echo $?
+1
+```
+
+Setting a custom exit code of `0`
+```
+$ globus task wait -H --timeout 35 --polling-interval 10 --timeout-exit-code 0 c1002af0-444e-11e9-bf28-0edbf3a4e7ee
+....
+Task has yet to complete after 35 seconds
+$ echo $?
+0
+```
+
+Cancelled task
+```
+$ globus task wait -H --timeout 60 --polling-interval 5 c1002af0-444e-11e9-bf28-0edbf3a4e7ee
+..
+$ echo $?
+1
+```

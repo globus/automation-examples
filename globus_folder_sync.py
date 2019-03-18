@@ -79,7 +79,8 @@ def save_data_to_file(filepath, key, data):
         store = load_data_from_file(filepath)
     except:
         store = {}
-    store[key] = data
+    if len(store) > 0:
+        store[key] = data
     with open(filepath, 'w') as f:
         json.dump(store, f)
 
@@ -137,7 +138,7 @@ def main():
     client = NativeClient(client_id=CLIENT_ID, app_name=APP_NAME)
     try:
         # if we already have tokens, load and use them
-        tokens = client.load_tokens(requested_scope=SCOPES)
+        tokens = client.load_tokens(requested_scopes=SCOPES)
     except:
         pass
 
@@ -154,13 +155,15 @@ def main():
     transfer = setup_transfer_client(tokens['transfer.api.globus.org'])
 
     try:
-        task_data = load_data_from_file(DATA_FILE)['task']
-        task = transfer.get_task(task_data['task_id'])
-        if task['status'] not in PREVIOUS_TASK_RUN_CASES:
-            print('The last transfer status is {}, skipping run...'.format(
-                task['status']
-            ))
-            sys.exit(1)
+        data = load_data_from_file(DATA_FILE)
+        if len(data) > 0:
+            task_data = data['task']
+            task = transfer.get_task(task_data['task_id'])
+            if task['status'] not in PREVIOUS_TASK_RUN_CASES:
+                print('The last transfer status is {}, skipping run...'.format(
+                    task['status']
+                ))
+                sys.exit(1)
     except KeyError:
         # Ignore if there is no previous task
         pass
