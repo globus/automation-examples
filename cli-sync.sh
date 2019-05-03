@@ -120,7 +120,7 @@ success_msg="Submitted sync from $SOURCE_ENDPOINT:$SOURCE_PATH to $DESTINATION_E
 source_path_enc=$(echo $SOURCE_PATH | sed 's?/?%%2F?g')
 destination_path_enc=$(echo $DESTINATION_PATH | sed 's?/?%%2F?g')
 # Note the double percent signs and \n for the printf statement
-link="Link:\nhttps://www.globus.org/app/transfer?origin_id=${SOURCE_ENDPOINT}&origin_path=${source_path_enc}&destination_id=${DESTINATION_ENDPOINT}&destination_path=${destination_path_enc}\n"
+link="Link:\nhttps://app.globus.org/activity/$globus_output/overview\n"
 
 # Check status
 check_last_rc "Globus transfer submission failed" "$success_msg\n$link"
