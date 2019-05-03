@@ -4,7 +4,7 @@
 Copy data from your private endpoint to a shared one for other people
 to access. You can share data with both individual users and groups.
 
-Required: You create a shared endpoint by going to globus.org/app/transfer
+Required: You create a shared endpoint by going to https://app.globus.org
 navigating to an Endpoint, and clicking "share". You can use "Globus Tutorial
 Endpoint 2" for testing.
 
@@ -73,8 +73,8 @@ CLIENT_SECRET = ''
 # (Your bot's identity will always match the client id for your
 # app + '@clients.auth.globus.org')
 #
-# You can also go to globus.org/app/endpoints?scope=shared-by-me and under
-# "Identity/E-mail" set: "<client_id>@clients.auth.globus.org"
+# You can also go to https://app.globus.org/endpoints?scope=shared-by-me
+# and under "Identity/E-mail" set: "<client_id>@clients.auth.globus.org"
 APP_AUTHENTICATORS = ('native', 'client-credentials')
 
 # Default is native for this script.
@@ -95,7 +95,7 @@ APP_NAME = 'Share Data Example App'
 source_endpoint = 'ddb59aef-6d04-11e5-ba46-22000b92c6ec'
 
 # Choose which shared folder you want to use.
-# Example: Go to globus.org/app/transfer and select:
+# Example: Go to https://app.globus.org/ and select:
 #     Endpoint: Globus Tutorial Endpoint 2
 #     Path: /~/
 #     And click 'share' to create your home directory as the shared endpoint.
@@ -351,7 +351,7 @@ def share_data(args):
         sys.exit(1)
     print('\ttask_id: {}'.format(task['task_id']))
     print('You can monitor the transfer task programmatically using Globus SDK'
-          ', or go to the Web UI, https://www.globus.org/app/activity/{}.'
+          ', or go to the Web UI, https://app.globus.org/activity/{}.'
           .format(task['task_id']))
 
 
