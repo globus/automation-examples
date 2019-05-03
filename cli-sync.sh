@@ -95,7 +95,7 @@ echo "Checking for a previous transfer"
 if [ -e "$LAST_TRANSFER_ID_FILE" ]
 then
     last_transfer_id=$(cat "$LAST_TRANSFER_ID_FILE")
-    last_transfer_status=$(globus task show --format json --jmespath 'status' $last_transfer_id | tr -d '"')
+    last_transfer_status=$(globus task show --format unix --jmespath 'status' $last_transfer_id)
     if [ "$last_transfer_status" != "SUCCEEDED" ] && [ "$last_transfer_status" != "FAILED" ]
        then
            abort_message="Last transfer $last_transfer_id status is $last_transfer_status, aborting"
@@ -107,11 +107,11 @@ then
 fi
 
 # Verify that the source paths is a directory
-globus ls --format json --jmespath 'code' "$SOURCE_ENDPOINT:$SOURCE_PATH" >& /dev/null
+globus ls --format unix --jmespath 'code' "$SOURCE_ENDPOINT:$SOURCE_PATH" >& /dev/null
 check_last_rc "Could not list source directory" "Verified that source is a directory\n"
 
 # Submit sync transfer, get the task ID
-globus_output=$(globus transfer --format json --jmespath 'task_id'  --recursive \
+globus_output=$(globus transfer --format unix --jmespath 'task_id'  --recursive \
                        --delete --sync-level $SYNCTYPE \
                        "$SOURCE_ENDPOINT:$SOURCE_PATH" \
                        "$DESTINATION_ENDPOINT:$DESTINATION_PATH")
@@ -127,4 +127,4 @@ check_last_rc "Globus transfer submission failed" "$success_msg\n$link"
 
 # Save ID of new sync transfer
 echo "Saving sync transfer ID to $LAST_TRANSFER_ID_FILE"
-echo $globus_output | tr -d '"' > "$LAST_TRANSFER_ID_FILE"
+echo $globus_output > "$LAST_TRANSFER_ID_FILE"

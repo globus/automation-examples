@@ -153,7 +153,7 @@ if [ $? == 0 ]; then
     # if it was, delete it
     if [ -n "$delete" ]; then
         echo "Destination directory, $destination_directory, exists and will be deleted"
-        task_id=`globus delete --jmespath 'task_id' --label 'Share Data Example' -r "$shared_endpoint:$destination_directory" | tr -d '"'`
+        task_id=`globus delete --format unix --jmespath 'task_id' --label 'Share Data Example' -r "$shared_endpoint:$destination_directory"`
         globus task wait --timeout 600 $task_id
         rc=$?
         check_rc
