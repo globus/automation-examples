@@ -3,11 +3,13 @@ Simple code examples for various use cases using Globus.
 
 ## Overview
 
-There are three example use cases in this repo:
+There are five example use cases in this repo:
 
 * Syncing a directory.
 * Staging data in a shared directory.
-* Removing directories after files are transferred .
+* Removing directories after files are transferred.
+* Generating an index file listing all directories and files on a shared endpoint.
+* Generating/Updating a GitHub Pages site.
 
 The syncing and staging examples are implemented as both a Bash
 script that calls the [Globus CLI](https://docs.globus.org/cli/) and 
@@ -21,6 +23,8 @@ The Python examples are built using the
 * [`share-data.sh`](share-data.sh): stages data to a folder and sets sharing access control to a user and or group.
 * [`share_data.py`](share_data.py): stages data to a folder and sets sharing access control to a user and or group. Uses a [Native App grant](https://github.com/globus/native-app-examples) or [Client Credential grant](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
 * [`cleanup_cache.py`](cleanup_cache.py): removes directories under a shared endpoint that have had data transferred from them. Uses [Client Credential grant](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
+* [`gen_index.py`](gen_index.py): generates an index file containing all directories and files on a shared endpoint.
+* [`create-pages.sh`](create_pages.sh): calls the `gen_index.py` script and generates/updates GitHub Pages site with the generated index.
 
 ## Getting Started
 * Install the [Globus Command Line Interface (CLI)](https://docs.globus.org/cli/installation/).
@@ -50,6 +54,7 @@ The Python examples are built using the
 * `source venv/bin/activate`
 * `pip install -r requirements.txt`
 
+
 ### Linux (Ubuntu)
 
 ##### Environment Setup
@@ -78,6 +83,11 @@ The Python examples are built using the
 * `pip install -r requirements.txt`
 
 ## Running the scripts
+<<<<<<< HEAD
+
+**Note**: Some of the examples will require you to login (see Login section for help).
+=======
+>>>>>>> 3dae86fee0e96638dca6a049e1adb916d3765812
 
 ### globus_folder_sync.py and cli-sync.sh
 
@@ -120,10 +130,14 @@ $ cat last-transfer-id.txt
 842ac3d8-39b5-11e7-bcec-22000b9a448b
 ```
 
+<<<<<<< HEAD
+### share_data.py and share-data.sh
+=======
 **Note**: Both ./globus_folder_sync.py and cli-sync.sh require you to login (see Login section for help).
 
 ### share_data.py and share-data.sh
 
+>>>>>>> 3dae86fee0e96638dca6a049e1adb916d3765812
 
 The app transfers a directory to a shared endpoint and destination path
 specified in the command line. The destination path must exist prior to running the script. Before the script starts transferring files it checks if the
@@ -182,6 +196,229 @@ Task ID: 60b80d23-39c2-11e7-bcec-22000b9a448b
 
 **Note**: Both share_data.py and share-data.sh require you to login (see Login section for help).
 
+<<<<<<< HEAD
+### gen_index.py
+
+The default behavior of this script is to create a single JSON file that lists all the files, and their attributes, in a given endpoint and path (subdirectories included). The following optional flags can change what kind of output (index) files you get:
+* `--no-json`: this flag stops the script from generating the JSON file
+* `--html-output`: this flag tells the script to generate an index.html file for the given endpoint and path
+* `--markdown-output`: this flag tells the script to generate an index.md file for the given endpoint and path
+
+A list containing all of the arguments and their descriptions can be obtained by entering `python gen_index.py -h` in the command line. The order that the arguments are given will not affect the behavior of the script.
+
+**Note**: It is assummed that the shared endpoint used in the examples below is the same one from the examples for the share_data.py and share-data.sh scripts. You will also need to set up your own (local) Globus Connect Personal Endpoint (for help see the `How To` found at https://docs.globus.org/how-to/ for your machine). It is also important to ensure that you have the correct permissions for both the shared and local endpoints. 
+
+The examples below demonstrates a few of the possible behaviors of the script.
+```
+# All of the examples for this script will use the following:
+$ local_ep='' # UUID of your local Globus Connect Personal Endpoint
+$ shared_ep='' # Shared endpoint (UUID) on Tutorial Endpoint 2
+```
+
+The example below shows the most basic use for this script.
+```
+$ ./gen_index.py \ 
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep
+```
+
+The example below is similar to the basic case (example above), but also enables HTML and Markdown index files using the `--html-output` and `--markdown-output` flags respectively.
+```
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpont $shared_ep \
+    --html-output \
+    --markdown-output
+```
+
+The example below disables JSON output by using the `--no-json` flag and enables HTML and Markdown index files using the `--html-output` and `--markdown-output` flags respectively.
+```
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpont $shared_ep \
+    --no-json \
+    --html-output \
+    --markdown-output
+```
+
+#### Default Behavior
+In addition to the previously mentioned options, there are certain actions that the script takes by default that can be changed if certain arguments are provided.
+* **Destination Endpoint and Directory**
+    * By default, the script uploads the index files to the provided shared endpoint and it's root (`/`) directory. It is possible to change this behavior by using the `--dest-endpoint` and `--dest-path` arguments to change the upload endpoint and directory respectively. This will only work if BOTH arguments are given; if only one is provided then the script will resort to it's default behavior.
+
+* **Recursive Index Files (only applies to HTML)**
+    * By default, the script generates a single `index.html` file that lists all of the files and directories, but it is possible to change this behavior by ussing the `--recursive` flag. This flag tells the script to create multiple (smaller) `index.html` files instead of a single large one. This means that every directory (starting from the root, or `tmp`, directory) will have an `index.html` file that lists the contents of that directory (see below for examples).
+    * This option only applies to the HTML index file(s); enabling this option without the `--html-output` flag will NOT change the script's default behavior.
+
+Example Directory (before the script):
+* FolderA
+    * File1.txt
+    * Folder2
+        * FileA.txt
+* FolderB
+
+Example Directory (after the script, assume that FolderA and FolderB are in the `tmp` folder):
+* FolderA
+    * File1.txt
+    * index.html
+    * Folder2
+        * FileA.txt
+        * index.html
+* FolderB
+    * index.html
+* index.html
+
+#### Using Filters
+
+The script also supports `include` and `exclude` filters. Include filters allow you to specify files and directories to include in the list, and stop the script from adding any files or directories not specified in the filters (see the example below).
+
+**Note:** When the script checks file and directory names against the filter(s), it is checking for an exact match. This means that if you have a "file1.txt" that you want to exclude, but you pass the argument as "file.txt" then the "file1.txt" will not be excluded. Also, the filters are case-sensitive by default, but this can be changed by using the `--case-insensitive` flag.
+```
+# This example tells the script to only list the files and directories in the `sync-demo` and `share-data-demo` folders
+$ include_filters = 'sync-demo share-data-demo'
+$ ./gen_index.py \
+    --local-endoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --include-filter $include_filters
+```
+
+Similarly, `exclude` filters allow you to specify files and directories that you do not want included in the list (see the example below).
+```
+# This example tells the script to ignore all files named "file1.txt" and any directories called "godata" (and the respective sub-folders and files). If the '--case-insensitive' flag were not provided then the script would not ignore the previously mentioned files and directories, since the case(s) would not match.
+$ exclude_filters = 'File1.tXt goData'
+$ ./gen_index.py \
+    --local-endoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --exclude-filter $exclude_filters
+    --case-insensitive
+```
+
+It is also possible to use both types of filters at the same time (see the example below). In these cases, include filters will always be applied prior to exclude filters.
+```
+# This example tells the script to only list files and directories in the `sync-demo` and `share-data-demo` folders, except for any directories called `godata` and files called `file1.txt`
+$ include_filters = 'sync-demo share-data-demo'
+$ exclude_filters = 'file1.txt godata'
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --include-filter $include_filters \
+    --exclude-filter $exclude_filters
+```
+
+If you want to filter files or directories that match a certain pattern then you should use Unix shell-style wildcards.
+
+**Note:** If you use wildcards, you will need to provide the filters in-line rather than storing them in a variable, otherwise they will be interpreted differently (e.g., '*.txt' becomes 'requirements.txt').
+```
+# This example tells the script to exclude all files and directories that end in ".txt", and include all files and directories that contain the word "data"
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --exclude-filter '*.txt' \
+    --include-filter '*data*'
+```
+
+#### Parsing Files
+The script also supports the option to parse the files in order to extract more information. Using the `--simple-parser` flag will enable this option and cause the script to parse the files and write the resulting metadata to a `parsed-data.json` file that will be saved to the provided local endpoint. Part of this process will involve downloading all of the files and folders from the shared endpoint to the local endpoint (and their respective directories), which will be stored in a temporary (`tmp`) folder.
+
+For details on how the Tika Python parser works, see: https://github.com/chrismattmann/tika-python 
+
+**Note**: It is assummed that the `tmp` folder and `parsed-data.json` file do not exist prior to running the script. To avoid errors or overwriting existing data it is recommended to either delete or rename any existing file or folder with those names. You can also go into the code and change the `local_index_dir` variable if you want the created folder to have a different name. In addition, it is possible to use the `include` and `exclude` filters with the parser; the command for this option is the same as in the Filter examples, just add the `--simple-parser` flag.
+
+The following is an example of the parser's basic behavior.
+```
+# This example generates the HTML and JSON index files, downloads the files from the shared endpont to the local endpoint, and generates a parsed-data.json file that contains the downloaded files metadata.
+$ ./gen_index.py \
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --html-output \
+    --simple-parser
+/godata
+/share-data-demo
+/share-data-demo/godata
+/share-data-demo/shared_dir
+/sync-demo
+Creating a transfer task with all index.html and index.md files...
+3300136e-2a27-11e9-9351-0e3d676669f4:/Users/[username]/automation-examples/tmp/index.html -> 152ea4ac-28c6-11e9-9836-0262a1f2f698:/index.html
+Submitting a transfer task...
+	task_id: 7ccb41fc-3b80-11e9-9e65-0266b1fe9f9e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/7ccb41fc-3b80-11e9-9e65-0266b1fe9f9e.
+
+Getting the files and directories to parse:
+Failed to create directory at path: /Users/[username]/automation-examples/tmp/share-data-demo/godata
+
+Submitting a transfer task...
+	task_id: 7d16cc58-3b80-11e9-9e65-0266b1fe9f9e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/7d16cc58-3b80-11e9-9e65-0266b1fe9f9e.
+
+Starting the Simple Parser:
+Generating "parsed_results.json" file in: /Users/[username]/automation-examples
+```
+Some things to note from the example above:
+* Getting a "Failed to create directory at path..." message
+    * The purpose of this message is to inform you that the script was unable to create the specified directory (at the given location). The most common cause of this message is that the directory in question already exists.
+    * It is possible to get multiple instances of this message (e.g., if more than one of the directories already exist).
+    * If you see this message then it is recommended that you check to make sure that the directory in question was successfully downloaded and accurately reflects the contents of the shared endpoint and directory that it was downloaded from.
+* /Users/[username]/automation-examples
+    * This path represents the main (local) directory that you are running the script from and may be different for you.
+         * [username] is just a placeholder and will differ depending on the individual.
+         
+### create-pages.sh
+This script calls the gen_index.py script, copies the index files generated from the `tmp` directory to the `docs/examples/indexgen/` directory, and commits and pushes those files to the GitHub repository. The purpose of the script is to automate the process of updating the GitHub Page for the repository.
+
+Things to keep in mind:
+* The GitHub repository that the files will be committed and pushed to is whichever one you are currently on.
+    * In most cases, this should be the `globus/automation-examples` repository.
+    * If you have forked the `globus/automation-examples` or are using a different repository, make sure that that GitHub Pages is set up correctly for your repository (see steps below)
+        * Step 1) Go to your GitHub repository
+        * Step 2) Navigate to the `GitHub Pages Settings (Settings -> GitHub Pages)`
+        * Step 3) For `Source` choose `master branch /docs folder`
+    * Make sure that you are in the `master` branch, as GitHub Pages does not look at any of the other branches.
+* The arguments that the script takes are the same as the arguments for running the `gen_index.py` script (see below for an example)
+* The script assumes that the `docs`, `docs/examples`, and `docs/examples/indexgen` directories already exist (in the root directory).
+```
+$ local_ep='' # UUID of your local Globus Connect Personal Endpoint
+$ shared_ep='' # Shared endpoint (UUID) on Tutorial Endpoint 2
+$ ./create-pages.sh \
+    --local-endpoint $local_ep \
+    --shared-endpoint $shared_ep \
+    --simple-parser \
+    --markdown-output
+/godata
+/share-data-demo
+/share-data-demo/godata
+/share-data-demo/shared_dir
+/sync-demo
+Creating a transfer task with all index.html and index.md files...
+3300136e-2a27-11e9-9351-0e3d676669f4:/Users/[username]/automation-examples/tmp/index.md -> 152ea4ac-28c6-11e9-9836-0262a1f2f698:/index.md
+Submitting a transfer task...
+	task_id: 2c10f088-3f84-11e9-9e69-0266b1fe9f9e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/2c10f088-3f84-11e9-9e69-0266b1fe9f9e.
+
+Getting the files and directories to parse:
+Failed to create directory at path: /Users/[username]/automation-examples/tmp/share-data-demo/godata
+
+Submitting a transfer task...
+	task_id: 2c6424a6-3f84-11e9-9e69-0266b1fe9f9e
+You can monitor the transfer task programmatically using Globus SDK, or go to the Web UI, https://www.globus.org/app/activity/2c6424a6-3f84-11e9-9e69-0266b1fe9f9e.
+
+Starting the Simple Parser:
+Generating "parsed_results.json" file in: /Users/[username]/automation-examples
+[master cd86fbd] updating index examples (from create-pages.sh)
+ 2 files changed, 257 insertions(+)
+ create mode 100644 docs/examples/indexgen/index.json
+ create mode 100644 docs/examples/indexgen/index.md
+Counting objects: 7, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 1.48 KiB | 1.48 MiB/s, done.
+Total 7 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/globus/automation-examples.git
+   b1d293a..cd86fbd  master -> master
+```
+
+=======
+>>>>>>> 3dae86fee0e96638dca6a049e1adb916d3765812
 ### cleanup_cache.py
 
 There are a few things that are necessary to set up in order to successfully run [`cleanup_cache.py`](cleanup_cache.py).
