@@ -2,7 +2,7 @@
 
 In this example we're going to submit transfers from two directories on a single Globus endpoint and have the data copied a single common directory. This can be used to aggregate results from different simulations or other jobs. It will show how to do a lot of things with the Globus CLI along the way. This example can be useful if you deal with hundreds or thousands of files and directories at a single time.
 
-We'll walkthrough of how to use the [Globus CLI](https://docs.globus.org/cli/) to list, filter, and [batch submit a transfer](https://docs.globus.org/cli/) from two locations into a single destination folder. To get started, you'll need to the have the Globus CLI installed and be logged in. See the [getting started](README.md#getting-started) section of the README.
+We'll walkthrough of how to use the [Globus CLI](https://docs.globus.org/cli/) to list, filter, and [batch submit a transfer](https://docs.globus.org/cli/reference/transfer/) from two locations into a single destination folder. To get started, you'll need to the have the Globus CLI installed and be logged in. See the [getting started](README.md#getting-started) section of the README.
 
 ## Get the Endpoint UUIDs
 
