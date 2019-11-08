@@ -9,11 +9,11 @@ We'll walkthrough of how to use the [Globus CLI](https://docs.globus.org/cli/) t
 We're going to copy data from ALCF's [Theta](https://www.alcf.anl.gov/theta) to [Petrel](http://petrel.alcf.anl.gov/), the storage system used to support community data repositories. Globus makes heavy use of UUIDs to refer to things like endpoints, so we'll search for them.
 
 ```
-$globus endpoint search theta
+$ globus endpoint search theta
 ID                                   | Owner             | Display Name  
 ------------------------------------ | ----------------- | --------------
 08925f04-569f-11e7-bef8-22000b9a448b | alcf@globusid.org | alcf#dtn_theta
-$globus endpoint search petrel#e3sm
+$ globus endpoint search petrel#e3sm
 ID                                   | Owner               | Display Name
 ------------------------------------ | ------------------- | ------------
 dabdceba-6d04-11e5-ba46-22000b92c6ec | petrel@globusid.org | petrel#e3sm 
