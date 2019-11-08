@@ -2,12 +2,11 @@
 
 In this example we're going to submit transfers from two directories on a single Globus endpoint and have the data copied a single common directory. This can be used to aggregate results from different simulations or other jobs. It will show how to do a lot of things with the Globus CLI along the way. This example can be useful if you deal with hundreds or thousands of files and directories at a single time.
 
-We'll walkthrough of how to use the [Globus CLI](https://docs.globus.org/cli/) to list, filter, and [batch submit a transfer](https://docs.globus.org/cli/) from two locations into a single destination folder. To get started, you'll need to the have the Globus CLI installed and be logged in. See the [getting started](./#getting-started) section of the README.
-
+We'll walkthrough of how to use the [Globus CLI](https://docs.globus.org/cli/) to list, filter, and [batch submit a transfer](https://docs.globus.org/cli/) from two locations into a single destination folder. To get started, you'll need to the have the Globus CLI installed and be logged in. See the [getting started](README.md#getting-started) section of the README.
 
 ## Get the Endpoint UUIDs
 
-We're going to copy data from ALCF's [Theta](https://www.alcf.anl.gov/theta) and [Petrel](http://petrel.alcf.anl.gov/), the storage system used to support community data repositories. Globus makes heavy use of UUIDs to refer to things like endpoints, so we'll search for them.
+We're going to copy data from ALCF's [Theta](https://www.alcf.anl.gov/theta) to [Petrel](http://petrel.alcf.anl.gov/), the storage system used to support community data repositories. Globus makes heavy use of UUIDs to refer to things like endpoints, so we'll search for them.
 
 ```
 $globus endpoint search theta
@@ -78,11 +77,12 @@ $ for i in `cat run2_watertable_files.txt `
 The base Globus CLI transfer command is
 
 ```
-$ globus transfer <source endpoint UUID>:<source path> <destination endpoint UUID>:<destination path>
+$ globus transfer <source ep UUID>:<source path> <destination ep UUID>:<destination path>
 ```
 
+The `--batch` option to the transfer command will read the `stdin` input from the file line by line to build the transfer request. The source and destination paths from the input files are relative to the paths we specify using `<source endpoint UUID>:<source path>` and `<destination endpoint UUID>:<destination path>`.
 
-The batch option to the transfer command will read the `stdin` input from the file line by line to build the transfer request. The source and destination paths from the input files are relative to the paths we specify using `<source endpoint UUID>:<source path>` and `<destination endpoint UUID>:<destination path>`. (You could submit one transfer per file, but then you would have a lot of tasks to monitor and the underlying Globus Connect servers would not be able efficiently aggregate the files. In other words, that's too much work and would be slower.)
+You could submit one transfer per file, but then you would have a lot of tasks to monitor and the underlying Globus Connect servers would not be able efficiently aggregate the files. In other words, that's too much work and would be slower.
 
 ```
 $ globus transfer --batch $theta_ep:$run1_path $petrel_e3sm_ep:$e3sm_path < run1_watertable_files_src_dest.txt 
@@ -96,6 +96,8 @@ Task ID: 15173a2e-01ab-11ea-be94-02fcc9cdd752
 ## Check Status on the Transfers
 
 You can monitor the tasks using the [web app](https://app.globus.org/activity) or with the CLI. Here, I've waited long enough for them to have finished. Since this example was within Argonne for a few hundreds of gigabytes, that's not surprising. Your transfer rates may vary.
+
+### `run1` Transfer
 
 ```
 $ globus task show 1d499566-01ab-11ea-be94-02fcc9cdd752
@@ -122,6 +124,11 @@ Destination Endpoint:    petrel#e3sm
 Destination Endpoint ID: dabdceba-6d04-11e5-ba46-22000b92c6ec
 Bytes Transferred:       44631218808
 Bytes Per Second:        480727214
+```
+
+### `run2` Transfer
+
+```
 $ globus task show 15173a2e-01ab-11ea-be94-02fcc9cdd752
 Label:                   None
 Task ID:                 15173a2e-01ab-11ea-be94-02fcc9cdd752
