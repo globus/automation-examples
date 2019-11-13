@@ -21,6 +21,7 @@ The Python examples are built using the
 * [`share-data.sh`](share-data.sh): stages data to a folder and sets sharing access control to a user and or group.
 * [`share_data.py`](share_data.py): stages data to a folder and sets sharing access control to a user and or group. Uses a [Native App grant](https://github.com/globus/native-app-examples) or [Client Credential grant](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
 * [`cleanup_cache.py`](cleanup_cache.py): removes directories under a shared endpoint that have had data transferred from them. Uses [Client Credential grant](http://globus-sdk-python.readthedocs.io/en/stable/examples/client_credentials/).
+* [Globus CLI Batch Transfer Recipe](batch.md): a guide on how to use the Globus CLI to list, filter, and batch submit a transfer from two locations into a single destination folder.
 
 ## Getting Started
 * Install the [Globus Command Line Interface (CLI)](https://docs.globus.org/cli/installation/).
