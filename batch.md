@@ -62,15 +62,20 @@ The batch transfer expects a list of source files and their corresponding destin
 `<sourcefile name> <source filename>`. (If we wanted to move the entire directory this would be a bit easier, we would use a recursive transfer. But we want to only move _some_ of the files from the source directories.)
 
 ```
-$ for i in `cat run1_watertable_files.txt `
+$ while IFS= read -r f
   do
-      echo "$i $i"
-  done > run1_watertable_files_src_dest.txt
-$ for i in `cat run2_watertable_files.txt `
+      echo "\"$f\" \"$f\""
+  done < run1_watertable_files.txt > run1_watertable_files_src_dest.txt
+
+$ while IFS= read -r f
   do
-      echo "$i $i"
-  done > run2_watertable_files_src_dest.txt
+      echo "\"$f\" \"$f\""
+  done < run2_watertable_files.txt > run2_watertable_files_src_dest.txt
 ```
+
+The extra double quotes output by the `echo` command account for the possibility that filenames may themselves contain spaces. The `--batch` option understands how to parse this and will respect filenames' internal whitespace when protected by quotes.
+
+If there's a possibility that your filenames may themselves contain quote characters (`"`, `'`, or <code>\`</code>), then replace the `echo` command with `printf "%q %q" "$filename" "$filename"`. That will account for most "special" characters by escaping them with backslashes. This feature is available in Bash and Zsh; your mileage may vary with other shells.
 
 ## Batch Submit the Transfers
 
